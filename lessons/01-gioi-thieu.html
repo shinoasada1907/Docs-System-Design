@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bài 1: Giới thiệu System Design — Khóa học System Design</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+</head>
+<body>
+  <button class="menu-btn" id="menuBtn">☰</button>
+  <div class="overlay" id="overlay"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header"><a href="../index.html" class="brand"><span class="logo">⚙</span> System Design <span>Khóa học</span></a></div>
+      <nav class="nav">
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-basic"></span> Cơ bản</div>
+          <a href="01-gioi-thieu.html">1. Giới thiệu System Design</a>
+          <a href="02-mang-co-ban.html">2. Mạng cơ bản (IP, DNS...)</a>
+          <a href="03-load-balancing-clustering.html">3. Load Balancing &amp; Clustering</a>
+          <a href="04-caching-cdn-proxy.html">4. Caching, CDN &amp; Proxy</a>
+          <a href="05-availability-scalability-storage.html">5. Availability, Scalability &amp; Storage</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-inter"></span> Trung cấp</div>
+          <a href="06-databases.html">6. Databases: SQL vs NoSQL</a>
+          <a href="07-database-scaling.html">7. Mở rộng Database</a>
+          <a href="08-consistency.html">8. Nhất quán dữ liệu (CAP...)</a>
+          <a href="09-architecture.html">9. Kiến trúc ứng dụng</a>
+          <a href="10-communication.html">10. Giao tiếp &amp; API</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-adv"></span> Nâng cao</div>
+          <a href="11-messaging.html">11. Messaging bất đồng bộ</a>
+          <a href="12-distributed-patterns.html">12. Mẫu hệ phân tán</a>
+          <a href="13-security-infra.html">13. Bảo mật &amp; Hạ tầng</a>
+          <a href="14-interviews.html">14. Phỏng vấn &amp; Case Studies</a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="content">
+        <div class="crumb"><span class="badge badge-basic">🟢 Cơ bản</span> · Bài 1 / 14</div>
+        <h1>Giới thiệu System Design</h1>
+        <p class="lead">System Design là gì, tại sao nó quan trọng, và tư duy cần có khi thiết kế một hệ thống ở quy mô lớn.</p>
+
+        <h2>System Design là gì?</h2>
+        <p><strong>System Design</strong> (Thiết kế hệ thống) là quá trình định nghĩa <strong>kiến trúc (architecture)</strong>, <strong>giao diện (interfaces)</strong> và <strong>dữ liệu (data)</strong> cho một hệ thống nhằm đáp ứng các yêu cầu cụ thể.</p>
+        <ul>
+          <li>Đáp ứng nhu cầu của doanh nghiệp/tổ chức thông qua các hệ thống mạch lạc và hiệu quả.</li>
+          <li>Đòi hỏi cách tiếp cận <strong>có hệ thống</strong> để xây dựng và kỹ thuật hóa hệ thống.</li>
+          <li>Một thiết kế tốt đòi hỏi suy nghĩ về <strong>mọi thứ</strong> — từ hạ tầng (infrastructure) cho tới tận dữ liệu và cách lưu trữ nó.</li>
+        </ul>
+
+        <h2>Tại sao System Design lại quan trọng?</h2>
+        <ul>
+          <li>Giúp định nghĩa một giải pháp <strong>đáp ứng yêu cầu nghiệp vụ</strong>.</li>
+          <li>Là một trong những quyết định <strong>sớm nhất</strong> khi xây dựng hệ thống.</li>
+          <li>Cần tư duy ở <strong>mức cao (high level)</strong> vì những quyết định này <strong>rất khó sửa về sau</strong>.</li>
+          <li>Giúp việc lập luận và quản lý các thay đổi kiến trúc trở nên dễ dàng hơn khi hệ thống tiến hóa.</li>
+        </ul>
+
+        <div class="note info">
+          <span class="note-title">ℹ️ Vì sao có khóa học này?</span>
+          <p>System Design xuất hiện trong hầu hết các buổi <strong>phỏng vấn kỹ sư</strong> ở công ty lớn, và là kỹ năng cốt lõi để xây dựng phần mềm thực tế. Khóa học dịch &amp; tổng hợp từ repo <a href="https://github.com/karanpratapsingh/system-design" target="_blank" rel="noopener">karanpratapsingh/system-design</a> — một trong những tài liệu phổ biến nhất về chủ đề này.</p>
+        </div>
+
+        <h2>Lộ trình khóa học</h2>
+        <p>System Design có rất nhiều khái niệm. Để tránh "loạn", khóa học chia theo 3 cấp độ:</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Cấp độ</th><th>Bài</th><th>Trọng tâm</th></tr></thead>
+            <tbody>
+              <tr><td><span class="badge badge-basic">🟢 Cơ bản</span></td><td>1–5</td><td>"Từ vựng" nền tảng: networking, load balancing, caching, scaling, storage.</td></tr>
+              <tr><td><span class="badge badge-inter">🟡 Trung cấp</span></td><td>6–10</td><td>Dữ liệu &amp; kiến trúc: databases, nhất quán dữ liệu, microservices, API.</td></tr>
+              <tr><td><span class="badge badge-adv">🔴 Nâng cao</span></td><td>11–14</td><td>Hệ phân tán, bảo mật, và vận dụng vào case study phỏng vấn.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="note tip">
+          <span class="note-title">💡 Mẹo tư duy</span>
+          <p>System Design <strong>không có một đáp án đúng duy nhất</strong> — luôn là các đánh đổi (trade-offs). Với mỗi khái niệm, hãy tự hỏi: <em>"Giải pháp này được gì, mất gì? Khi nào nên dùng?"</em>. Đó chính là tư duy mà người phỏng vấn tìm kiếm.</p>
+        </div>
+
+        <div class="note tip">
+          <span class="note-title">✅ Tóm tắt bài 1</span>
+          <p>System Design = định nghĩa kiến trúc + interface + dữ liệu để đáp ứng yêu cầu. Quan trọng vì là quyết định sớm và khó sửa. Học theo lộ trình Cơ bản → Trung cấp → Nâng cao. Luôn tư duy theo trade-offs.</p>
+        </div>
+
+        <div class="pager">
+          <a href="../index.html"><div class="dir">← Quay lại</div><div class="ttl">Trang chủ khóa học</div></a>
+          <a class="next" href="02-mang-co-ban.html"><div class="dir">Bài tiếp theo →</div><div class="ttl">Mạng cơ bản (IP, OSI, TCP/UDP, DNS)</div></a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="../assets/script.js"></script>
+</body>
+</html>

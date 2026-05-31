@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bài 6: Databases SQL vs NoSQL — Khóa học System Design</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+</head>
+<body>
+  <button class="menu-btn" id="menuBtn">☰</button>
+  <div class="overlay" id="overlay"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header"><a href="../index.html" class="brand"><span class="logo">⚙</span> System Design <span>Khóa học</span></a></div>
+      <nav class="nav">
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-basic"></span> Cơ bản</div>
+          <a href="01-gioi-thieu.html">1. Giới thiệu System Design</a>
+          <a href="02-mang-co-ban.html">2. Mạng cơ bản (IP, DNS...)</a>
+          <a href="03-load-balancing-clustering.html">3. Load Balancing &amp; Clustering</a>
+          <a href="04-caching-cdn-proxy.html">4. Caching, CDN &amp; Proxy</a>
+          <a href="05-availability-scalability-storage.html">5. Availability, Scalability &amp; Storage</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-inter"></span> Trung cấp</div>
+          <a href="06-databases.html">6. Databases: SQL vs NoSQL</a>
+          <a href="07-database-scaling.html">7. Mở rộng Database</a>
+          <a href="08-consistency.html">8. Nhất quán dữ liệu (CAP...)</a>
+          <a href="09-architecture.html">9. Kiến trúc ứng dụng</a>
+          <a href="10-communication.html">10. Giao tiếp &amp; API</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-adv"></span> Nâng cao</div>
+          <a href="11-messaging.html">11. Messaging bất đồng bộ</a>
+          <a href="12-distributed-patterns.html">12. Mẫu hệ phân tán</a>
+          <a href="13-security-infra.html">13. Bảo mật &amp; Hạ tầng</a>
+          <a href="14-interviews.html">14. Phỏng vấn &amp; Case Studies</a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="content">
+        <div class="crumb"><span class="badge badge-inter">🟡 Trung cấp</span> · Bài 6 / 14</div>
+        <h1>Databases: SQL vs NoSQL</h1>
+        <p class="lead">Database &amp; DBMS, sự khác biệt giữa cơ sở dữ liệu quan hệ (SQL) và phi quan hệ (NoSQL), các loại NoSQL, và khi nào nên chọn cái nào.</p>
+
+        <h2>Database &amp; DBMS</h2>
+        <p>Một <strong>database</strong> là tập hợp dữ liệu được tổ chức, lưu điện tử. <strong>DBMS</strong> (Database Management System) là phần mềm điều khiển database — làm cầu nối giữa database với người dùng/chương trình, cho phép truy xuất, cập nhật, quản lý, sao lưu &amp; phục hồi dữ liệu.</p>
+        <p><strong>Thành phần:</strong> Schema (định nghĩa cấu trúc), Table (bảng), Column (cột — một loại dữ liệu), Row (hàng — một bản ghi).</p>
+
+        <figure class="fig fig-md"><img src="../assets/img/database-types.png" alt="Các loại database" loading="lazy" /><figcaption>Tổng quan các loại database: SQL và các họ NoSQL</figcaption></figure>
+
+        <h2>SQL databases (quan hệ)</h2>
+        <ul>
+          <li>Tổ chức thành <strong>bảng</strong> với quan hệ định nghĩa trước; mỗi hàng có <strong>primary key</strong>, liên kết bảng qua <strong>foreign key</strong>.</li>
+          <li>Theo mô hình nhất quán <strong>ACID</strong>.</li>
+          <li><strong>Ưu:</strong> đơn giản &amp; chính xác, dễ truy cập, nhất quán dữ liệu, linh hoạt query. <strong>Nhược:</strong> đắt bảo trì, đổi schema khó (cần migration), khó scale ngang.</li>
+          <li><em>Ví dụ:</em> PostgreSQL, MySQL, MariaDB, Amazon Aurora.</li>
+        </ul>
+        <div class="note info">
+          <span class="note-title">ℹ️ Khái niệm liên quan</span>
+          <p><strong>Materialized view</strong>: tập dữ liệu được tính sẵn &amp; lưu lại → query nhanh hơn (dùng cho hiệu năng &amp; replication). <strong>N+1 query problem</strong>: chạy thừa N câu lệnh đáng ra gộp được một (hay gặp ở GraphQL &amp; ORM) — khắc phục bằng tối ưu query hoặc <em>dataloader</em> (gộp batch).</p>
+        </div>
+
+        <h2>NoSQL databases (phi quan hệ)</h2>
+        <p>Bất kỳ DB nào không dùng SQL làm ngôn ngữ truy cập chính. Dữ liệu <strong>không bắt buộc theo schema định trước</strong>, theo mô hình nhất quán <strong>BASE</strong>.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Loại NoSQL</th><th>Đặc điểm</th><th>Ví dụ</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Document</strong></td><td>Lưu dạng tài liệu; trực quan, linh hoạt, dễ scale ngang. Đa dụng.</td><td>MongoDB, CouchDB, DocumentDB</td></tr>
+              <tr><td><strong>Key-value</strong></td><td>Cặp khóa-giá trị; đơn giản, hiệu năng cao; tốt cho session/lookup.</td><td>Redis, DynamoDB, Memcached</td></tr>
+              <tr><td><strong>Graph</strong></td><td>Node/edge/property; tốt cho quan hệ phức tạp.</td><td>Neo4j, ArangoDB, Neptune</td></tr>
+              <tr><td><strong>Time series</strong></td><td>Tối ưu dữ liệu gắn mốc thời gian.</td><td>InfluxDB, Apache Druid</td></tr>
+              <tr><td><strong>Wide column</strong></td><td>Lưu theo <em>column family</em>; scale cực lớn (petabytes).</td><td>Cassandra, BigTable, ScyllaDB</td></tr>
+              <tr><td><strong>Multi-model</strong></td><td>Kết hợp nhiều mô hình trong một backend.</td><td>ArangoDB, Cosmos DB, Couchbase</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Use cases tiêu biểu: Graph → phát hiện gian lận, gợi ý, mạng xã hội. Time series → IoT, metrics, giám sát ứng dụng. Wide column → big data, phân tích real-time.</p>
+
+        <h2>SQL vs NoSQL ⭐</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Khía cạnh</th><th>SQL</th><th>NoSQL</th></tr></thead>
+            <tbody>
+              <tr><td>Lưu trữ</td><td>Bảng (hàng = entity, cột = thuộc tính).</td><td>Đa dạng: key-value, document, graph...</td></tr>
+              <tr><td>Schema</td><td>Cố định; đổi cần <strong>migration</strong>.</td><td>Động; thêm field tùy ý.</td></tr>
+              <tr><td>Query</td><td>Ngôn ngữ SQL (rất mạnh).</td><td>Tùy DB, thường theo collection.</td></tr>
+              <tr><td>Scaling</td><td>Thường <strong>scale dọc</strong> (đắt).</td><td><strong>Scale ngang</strong> (commodity hardware, rẻ).</td></tr>
+              <tr><td>Độ tin cậy</td><td>Đa số <strong>ACID</strong>.</td><td>Thường hi sinh ACID để lấy hiệu năng/scale.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note tip">
+          <span class="note-title">💡 Khi nào chọn cái nào?</span>
+          <p><strong>Chọn SQL</strong> khi: dữ liệu có cấu trúc &amp; schema chặt, dữ liệu quan hệ, cần join phức tạp, cần transaction. <strong>Chọn NoSQL</strong> khi: schema linh hoạt, dữ liệu phi quan hệ, không cần join phức tạp, workload cực lớn, cần throughput IOPS rất cao.</p>
+        </div>
+
+        <div class="note tip">
+          <span class="note-title">✅ Tóm tắt bài 6</span>
+          <p>SQL = quan hệ, schema cố định, ACID, join mạnh, scale dọc. NoSQL = phi quan hệ, schema động, BASE, scale ngang, nhiều loại (document/key-value/graph/time-series/wide-column/multi-model). Chọn theo cấu trúc dữ liệu &amp; nhu cầu scale/transaction.</p>
+        </div>
+
+        <div class="pager">
+          <a href="05-availability-scalability-storage.html"><div class="dir">← Bài trước</div><div class="ttl">Availability, Scalability &amp; Storage</div></a>
+          <a class="next" href="07-database-scaling.html"><div class="dir">Bài tiếp theo →</div><div class="ttl">Mở rộng Database</div></a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="../assets/script.js"></script>
+</body>
+</html>

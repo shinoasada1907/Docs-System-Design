@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bài 13: Bảo mật &amp; Hạ tầng — Khóa học System Design</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+</head>
+<body>
+  <button class="menu-btn" id="menuBtn">☰</button>
+  <div class="overlay" id="overlay"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header"><a href="../index.html" class="brand"><span class="logo">⚙</span> System Design <span>Khóa học</span></a></div>
+      <nav class="nav">
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-basic"></span> Cơ bản</div>
+          <a href="01-gioi-thieu.html">1. Giới thiệu System Design</a>
+          <a href="02-mang-co-ban.html">2. Mạng cơ bản (IP, DNS...)</a>
+          <a href="03-load-balancing-clustering.html">3. Load Balancing &amp; Clustering</a>
+          <a href="04-caching-cdn-proxy.html">4. Caching, CDN &amp; Proxy</a>
+          <a href="05-availability-scalability-storage.html">5. Availability, Scalability &amp; Storage</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-inter"></span> Trung cấp</div>
+          <a href="06-databases.html">6. Databases: SQL vs NoSQL</a>
+          <a href="07-database-scaling.html">7. Mở rộng Database</a>
+          <a href="08-consistency.html">8. Nhất quán dữ liệu (CAP...)</a>
+          <a href="09-architecture.html">9. Kiến trúc ứng dụng</a>
+          <a href="10-communication.html">10. Giao tiếp &amp; API</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-adv"></span> Nâng cao</div>
+          <a href="11-messaging.html">11. Messaging bất đồng bộ</a>
+          <a href="12-distributed-patterns.html">12. Mẫu hệ phân tán</a>
+          <a href="13-security-infra.html">13. Bảo mật &amp; Hạ tầng</a>
+          <a href="14-interviews.html">14. Phỏng vấn &amp; Case Studies</a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="content">
+        <div class="crumb"><span class="badge badge-adv">🔴 Nâng cao</span> · Bài 13 / 14</div>
+        <h1>Bảo mật &amp; Hạ tầng</h1>
+        <p class="lead">Ảo hóa (VMs vs Containers) và các giao thức xác thực/bảo mật then chốt: OAuth 2.0, OpenID Connect, SSO/SAML, và SSL/TLS/mTLS.</p>
+
+        <h2>Virtual Machines vs Containers</h2>
+        <p><strong>VM</strong>: môi trường ảo có CPU/RAM/network/storage riêng, tạo trên phần cứng vật lý nhờ <strong>hypervisor</strong>. Mỗi VM có <strong>guest OS riêng</strong>. <strong>Container</strong>: đóng gói code + mọi dependency để app chạy nhất quán mọi nơi; chia sẻ <strong>kernel của host OS</strong>.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th></th><th>Virtual Machines</th><th>Containers</th></tr></thead>
+            <tbody>
+              <tr><td>Ảo hóa cái gì</td><td>Phần cứng (qua hypervisor)</td><td>Hệ điều hành</td></tr>
+              <tr><td>Chứa gì</td><td>Guest OS + phần cứng ảo + app + libs</td><td>Chỉ app + dependency</td></tr>
+              <tr><td>OS</td><td>Mỗi VM có OS riêng</td><td>Dùng chung kernel host</td></tr>
+              <tr><td>Trọng lượng</td><td>Nặng</td><td>Rất nhẹ</td></tr>
+              <tr><td>Bộ nhớ</td><td>Tốn nhiều</td><td>Dùng một phần nhỏ so với VM</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figure class="fig fig-md"><img src="../assets/img/virtualization-vs-containerization.png" alt="VM vs Container" loading="lazy" /><figcaption>VM ảo hóa phần cứng (mỗi VM có OS riêng) vs Container ảo hóa OS (dùng chung kernel)</figcaption></figure>
+
+        <div class="note info">
+          <span class="note-title">ℹ️ Ghi nhớ</span>
+          <p>VM ảo hóa <em>phần cứng</em> (cách ly mạnh, nặng). Container ảo hóa <em>OS</em> (nhẹ, khởi động nhanh, portable). Container là nền tảng của microservices hiện đại (Docker + Kubernetes — xem Bài 3 Clustering).</p>
+        </div>
+
+        <h2>OAuth 2.0</h2>
+        <p>OAuth = Open Authorization — chuẩn cho phép truy cập tài nguyên <strong>thay mặt người dùng mà KHÔNG chia sẻ mật khẩu</strong>. Đây là giao thức <strong>authorization (ủy quyền)</strong>, <em>không phải</em> authentication.</p>
+        <p><strong>Các vai trò:</strong> Resource Owner (chủ tài nguyên = user), Client (bên cần truy cập), Authorization Server (cấp Access Token), Resource Server (giữ &amp; bảo vệ tài nguyên), Scopes (phạm vi quyền), Access Token (đại diện cho ủy quyền).</p>
+        <div class="diagram">Client ─(1) xin authorization──▶ Authorization Server
+Resource Owner ─(2) đồng ý──────▶ Authorization Server
+Authorization Server ─(3) Access Token──▶ Client
+Client ─(4) Access Token─────────▶ Resource Server ──▶ tài nguyên</div>
+        <figure class="fig fig-md"><img src="../assets/img/oauth2.png" alt="OAuth 2.0 flow" loading="lazy" /><figcaption>Luồng OAuth 2.0 giữa Client, Resource Owner, Authorization Server &amp; Resource Server</figcaption></figure>
+
+        <h2>OpenID Connect (OIDC)</h2>
+        <p>OAuth 2.0 chỉ lo <em>authorization</em>. OIDC là lớp mỏng <strong>trên</strong> OAuth 2.0, bổ sung <strong>đăng nhập (authentication)</strong> &amp; thông tin hồ sơ người dùng. Khi Authorization Server hỗ trợ OIDC, nó được gọi là <strong>Identity Provider (IdP)</strong>. Điểm khác biệt: token được cấp dưới dạng <strong>JWT (JSON Web Token)</strong>.</p>
+
+        <h2>Single Sign-On (SSO)</h2>
+        <p>Cho phép dùng <strong>một bộ thông tin đăng nhập</strong> để truy cập nhiều ứng dụng. Thông tin do một <strong>Identity Provider (IdP)</strong> trung tâm quản lý.</p>
+        <p><strong>Thành phần:</strong> IdP (xác thực &amp; cấp quyền), Service Provider (cung cấp dịch vụ, tin tưởng IdP), Identity Broker (trung gian nối nhiều SP với nhiều IdP). <strong>SAML</strong> (Security Assertion Markup Language, dạng XML) cho phép <em>identity federation</em>.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th></th><th>SAML</th><th>OAuth 2.0 / OIDC</th></tr></thead>
+            <tbody>
+              <tr><td>Định dạng</td><td>XML</td><td>JSON</td></tr>
+              <tr><td>Phù hợp</td><td>Bảo mật cấp doanh nghiệp</td><td>Mobile &amp; web hiện đại (RESTful)</td></tr>
+              <tr><td>Triển khai</td><td>Phức tạp, hợp công ty lớn</td><td>Developer-friendly, nhanh</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figure class="fig fig-md"><img src="../assets/img/sso.png" alt="Single Sign-On" loading="lazy" /><figcaption>SSO — một lần đăng nhập qua Identity Provider để truy cập nhiều ứng dụng</figcaption></figure>
+
+        <div class="note danger">
+          <span class="note-title">🚨 Đánh đổi của SSO</span>
+          <p><strong>Ưu:</strong> dễ dùng (nhớ 1 mật khẩu), dễ truy cập, dễ quản lý, tăng bảo mật/tuân thủ. <strong>Nhược:</strong> nếu lộ mật khẩu SSO → <em>mọi</em> ứng dụng bị ảnh hưởng; chậm hơn vì mỗi app phải hỏi IdP. <em>Ví dụ IdP:</em> Okta, Google, Auth0, OneLogin.</p>
+        </div>
+
+        <h2>SSL, TLS, mTLS</h2>
+        <ul>
+          <li><strong>SSL</strong> (Secure Sockets Layer, 1995): giao thức mã hóa truyền thông internet — đã <em>deprecated</em>, thay bằng TLS (nhưng "SSL certificate" vẫn được gọi quen).</li>
+          <li><strong>TLS</strong> (Transport Layer Security): tiến hóa từ SSL; đạt 3 mục tiêu — <strong>Encryption</strong> (mã hóa), <strong>Authentication</strong> (xác thực các bên), <strong>Integrity</strong> (toàn vẹn, chống giả mạo).</li>
+          <li><strong>mTLS</strong> (mutual TLS): xác thực <strong>cả hai chiều</strong> — cả client &amp; server đều chứng minh danh tính qua private key/certificate. Hay dùng trong microservices theo mô hình <strong>zero trust</strong>, và với thiết bị IoT (không có quy trình login).</li>
+        </ul>
+
+        <div class="note tip">
+          <span class="note-title">✅ Tóm tắt bài 13</span>
+          <p>VM ảo hóa phần cứng (nặng, cách ly mạnh), Container ảo hóa OS (nhẹ, portable). OAuth 2.0 = ủy quyền (không chia sẻ mật khẩu); OIDC thêm đăng nhập (JWT). SSO = 1 đăng nhập cho nhiều app qua IdP (SAML/OIDC). SSL→TLS mã hóa truyền thông; mTLS xác thực hai chiều (zero trust).</p>
+        </div>
+
+        <div class="pager">
+          <a href="12-distributed-patterns.html"><div class="dir">← Bài trước</div><div class="ttl">Mẫu hệ phân tán</div></a>
+          <a class="next" href="14-interviews.html"><div class="dir">Bài tiếp theo →</div><div class="ttl">Phỏng vấn &amp; Case Studies</div></a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="../assets/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bài 10: Giao tiếp &amp; API — Khóa học System Design</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+</head>
+<body>
+  <button class="menu-btn" id="menuBtn">☰</button>
+  <div class="overlay" id="overlay"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header"><a href="../index.html" class="brand"><span class="logo">⚙</span> System Design <span>Khóa học</span></a></div>
+      <nav class="nav">
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-basic"></span> Cơ bản</div>
+          <a href="01-gioi-thieu.html">1. Giới thiệu System Design</a>
+          <a href="02-mang-co-ban.html">2. Mạng cơ bản (IP, DNS...)</a>
+          <a href="03-load-balancing-clustering.html">3. Load Balancing &amp; Clustering</a>
+          <a href="04-caching-cdn-proxy.html">4. Caching, CDN &amp; Proxy</a>
+          <a href="05-availability-scalability-storage.html">5. Availability, Scalability &amp; Storage</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-inter"></span> Trung cấp</div>
+          <a href="06-databases.html">6. Databases: SQL vs NoSQL</a>
+          <a href="07-database-scaling.html">7. Mở rộng Database</a>
+          <a href="08-consistency.html">8. Nhất quán dữ liệu (CAP...)</a>
+          <a href="09-architecture.html">9. Kiến trúc ứng dụng</a>
+          <a href="10-communication.html">10. Giao tiếp &amp; API</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-adv"></span> Nâng cao</div>
+          <a href="11-messaging.html">11. Messaging bất đồng bộ</a>
+          <a href="12-distributed-patterns.html">12. Mẫu hệ phân tán</a>
+          <a href="13-security-infra.html">13. Bảo mật &amp; Hạ tầng</a>
+          <a href="14-interviews.html">14. Phỏng vấn &amp; Case Studies</a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="content">
+        <div class="crumb"><span class="badge badge-inter">🟡 Trung cấp</span> · Bài 10 / 14</div>
+        <h1>Giao tiếp &amp; API</h1>
+        <p class="lead">Cách các thành phần "nói chuyện": ba kiểu API (REST, GraphQL, gRPC) và ba kỹ thuật server đẩy dữ liệu real-time (Long polling, WebSockets, SSE).</p>
+
+        <h2>API là gì?</h2>
+        <p>API (Application Programming Interface) là tập định nghĩa &amp; giao thức để xây dựng và tích hợp phần mềm — như một "hợp đồng" giữa bên cung cấp và bên dùng thông tin.</p>
+
+        <h2>REST</h2>
+        <p>REST (Representational State Transfer, Roy Fielding 2000). Đơn vị cơ bản là <strong>resource</strong>. Ràng buộc: Uniform Interface, Client-Server, <strong>Stateless</strong>, Cacheable, Layered system, Code on demand (tùy chọn).</p>
+        <p>HTTP verbs: <code>GET</code>, <code>POST</code>, <code>PUT</code>, <code>PATCH</code>, <code>DELETE</code>, <code>HEAD</code>. Mã phản hồi: 1xx (info), 2xx (thành công), 3xx (redirect), 4xx (lỗi client), 5xx (lỗi server).</p>
+        <div class="code-block">
+          <div class="code-head"><span class="fname"><span class="dot"></span> RESTful API cho resource "users"</span><span class="lang">http</span></div>
+          <pre><code class="language-http">GET    /users        → lấy tất cả user
+GET    /users/{id}   → lấy 1 user theo id
+POST   /users        → thêm user mới
+PATCH  /users/{id}   → cập nhật user
+DELETE /users/{id}   → xóa user</code></pre>
+          <button class="copy-btn">Copy</button>
+        </div>
+
+        <h2>GraphQL</h2>
+        <p>Ngôn ngữ truy vấn cho API (Facebook 2015) — client lấy <strong>chính xác</strong> dữ liệu cần, không hơn. Đơn vị cơ bản là <strong>query</strong>. Khái niệm: Schema, Queries (&amp; mutation), Resolvers.</p>
+        <div class="code-block">
+          <div class="code-head"><span class="fname"><span class="dot"></span> schema &amp; query</span><span class="lang">graphql</span></div>
+          <pre><code class="language-graphql">type Query { getUser: User }
+type User { id: ID  name: String  city: String  state: String }
+
+# Client chỉ yêu cầu field cần
+{ getUser { id  name  city } }</code></pre>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <p><strong>Ưu:</strong> hết over-fetching, schema chặt, payload tối ưu. <strong>Nhược:</strong> đẩy phức tạp về server, caching khó, có N+1 problem.</p>
+
+        <h2>gRPC</h2>
+        <p>Framework RPC hiệu năng cao, mã nguồn mở. Dùng <strong>Protocol Buffers</strong> (serialize nhị phân, nhỏ &amp; nhanh hơn JSON) làm IDL.</p>
+        <div class="code-block">
+          <div class="code-head"><span class="fname"><span class="dot"></span> file *.proto</span><span class="lang">protobuf</span></div>
+          <pre><code class="language-protobuf">service HelloService {
+  rpc SayHello (HelloRequest) returns (HelloResponse);
+}
+message HelloRequest  { string greeting = 1; }
+message HelloResponse { string reply = 1; }</code></pre>
+          <button class="copy-btn">Copy</button>
+        </div>
+        <p><strong>Ưu:</strong> nhẹ, hiệu năng cao, codegen sẵn, bi-directional streaming. <strong>Nhược:</strong> mới hơn, hỗ trợ browser hạn chế, học khó hơn, không human-readable.</p>
+
+        <h3>So sánh REST vs GraphQL vs gRPC ⭐</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th></th><th>REST</th><th>GraphQL</th><th>gRPC</th></tr></thead>
+            <tbody>
+              <tr><td>Chattiness (số round-trip)</td><td>Cao</td><td>Thấp</td><td>Trung bình</td></tr>
+              <tr><td>Performance</td><td>Tốt</td><td>Tốt</td><td>Tuyệt</td></tr>
+              <tr><td>Complexity</td><td>Trung bình</td><td>Cao</td><td>Thấp</td></tr>
+              <tr><td>Caching</td><td>Tuyệt</td><td>Tùy biến</td><td>Tùy biến</td></tr>
+              <tr><td>Codegen</td><td>Kém</td><td>Tốt</td><td>Tuyệt</td></tr>
+              <tr><td>Versioning</td><td>Dễ</td><td>Tùy biến</td><td>Khó</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>Cái nào tốt hơn?</strong> Không có "viên đạn bạc" — chọn theo domain &amp; yêu cầu. REST cho API công khai phổ thông, GraphQL khi client cần linh hoạt &amp; giảm băng thông, gRPC cho giao tiếp nội bộ microservices low-latency.</p>
+
+        <h2>Long polling vs WebSockets vs SSE</h2>
+        <p>Mặc định web là client-server (client luôn khởi tạo). Ba cách để server "đẩy" dữ liệu xuống client:</p>
+        <figure class="fig fig-md"><img src="../assets/img/long-polling.png" alt="Long polling" loading="lazy" /><figcaption><b>Long polling</b> — client hỏi, server giữ kết nối đến khi có dữ liệu rồi trả</figcaption></figure>
+        <figure class="fig fig-md"><img src="../assets/img/websockets.png" alt="WebSockets" loading="lazy" /><figcaption><b>WebSockets</b> — kết nối hai chiều (full-duplex) bền vững</figcaption></figure>
+        <figure class="fig fig-md"><img src="../assets/img/server-sent-events.png" alt="Server-Sent Events" loading="lazy" /><figcaption><b>SSE</b> — một chiều, server đẩy event xuống client</figcaption></figure>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th></th><th>Long polling</th><th>WebSockets</th><th>SSE</th></tr></thead>
+            <tbody>
+              <tr><td>Chiều</td><td>Client hỏi, server giữ rồi trả</td><td>Hai chiều (full-duplex)</td><td>Một chiều (server → client)</td></tr>
+              <tr><td>Kết nối</td><td>Mở mới mỗi vòng</td><td>Một kết nối TCP bền vững</td><td>Một kết nối dài</td></tr>
+              <tr><td>Giao thức</td><td>HTTP</td><td><code>ws://</code> (sau HTTP Upgrade)</td><td>HTTP</td></tr>
+              <tr><td>Binary data</td><td>—</td><td>Có</td><td>Không</td></tr>
+              <tr><td>Scale</td><td>Kém (mỗi request 1 kết nối)</td><td>Tốt</td><td>Hạn chế (giới hạn số kết nối)</td></tr>
+              <tr><td>Hợp cho</td><td>Dự án nhỏ</td><td>Real-time 2 chiều (chat, game)</td><td>Đẩy event/cập nhật</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="note tip">
+          <span class="note-title">✅ Tóm tắt bài 10</span>
+          <p>REST (resource, stateless, caching tốt — API công khai), GraphQL (query đúng field — linh hoạt, hết over-fetch), gRPC (protobuf, streaming — nội bộ microservices). Để server đẩy real-time: Long polling (đơn giản, kém scale), WebSockets (2 chiều — chat/game), SSE (1 chiều — đẩy cập nhật).</p>
+        </div>
+
+        <div class="pager">
+          <a href="09-architecture.html"><div class="dir">← Bài trước</div><div class="ttl">Kiến trúc ứng dụng</div></a>
+          <a class="next" href="11-messaging.html"><div class="dir">Bài tiếp theo →</div><div class="ttl">Messaging bất đồng bộ</div></a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="../assets/script.js"></script>
+</body>
+</html>

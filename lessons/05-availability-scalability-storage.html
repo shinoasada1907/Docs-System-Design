@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bài 5: Availability, Scalability &amp; Storage — Khóa học System Design</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+</head>
+<body>
+  <button class="menu-btn" id="menuBtn">☰</button>
+  <div class="overlay" id="overlay"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header"><a href="../index.html" class="brand"><span class="logo">⚙</span> System Design <span>Khóa học</span></a></div>
+      <nav class="nav">
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-basic"></span> Cơ bản</div>
+          <a href="01-gioi-thieu.html">1. Giới thiệu System Design</a>
+          <a href="02-mang-co-ban.html">2. Mạng cơ bản (IP, DNS...)</a>
+          <a href="03-load-balancing-clustering.html">3. Load Balancing &amp; Clustering</a>
+          <a href="04-caching-cdn-proxy.html">4. Caching, CDN &amp; Proxy</a>
+          <a href="05-availability-scalability-storage.html">5. Availability, Scalability &amp; Storage</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-inter"></span> Trung cấp</div>
+          <a href="06-databases.html">6. Databases: SQL vs NoSQL</a>
+          <a href="07-database-scaling.html">7. Mở rộng Database</a>
+          <a href="08-consistency.html">8. Nhất quán dữ liệu (CAP...)</a>
+          <a href="09-architecture.html">9. Kiến trúc ứng dụng</a>
+          <a href="10-communication.html">10. Giao tiếp &amp; API</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-adv"></span> Nâng cao</div>
+          <a href="11-messaging.html">11. Messaging bất đồng bộ</a>
+          <a href="12-distributed-patterns.html">12. Mẫu hệ phân tán</a>
+          <a href="13-security-infra.html">13. Bảo mật &amp; Hạ tầng</a>
+          <a href="14-interviews.html">14. Phỏng vấn &amp; Case Studies</a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="content">
+        <div class="crumb"><span class="badge badge-basic">🟢 Cơ bản</span> · Bài 5 / 14</div>
+        <h1>Availability, Scalability &amp; Storage</h1>
+        <p class="lead">Ba thuộc tính phi chức năng (non-functional) cốt lõi: hệ thống "sống" được bao lâu (availability), mở rộng thế nào (scalability), và lưu dữ liệu ra sao (storage).</p>
+
+        <h2>Availability (Tính sẵn sàng)</h2>
+        <p>Là phần trăm thời gian hệ thống hoạt động bình thường. Công thức:</p>
+        <div class="diagram">Availability = Uptime / (Uptime + Downtime)</div>
+        <h3>"Số 9" của availability</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Availability</th><th>Downtime / năm</th><th>Downtime / tháng</th></tr></thead>
+            <tbody>
+              <tr><td>90% (một số 9)</td><td>36.53 ngày</td><td>72 giờ</td></tr>
+              <tr><td>99% (hai số 9)</td><td>3.65 ngày</td><td>7.20 giờ</td></tr>
+              <tr><td>99.9% (ba số 9)</td><td>8.77 giờ</td><td>43.8 phút</td></tr>
+              <tr><td>99.99% (bốn số 9)</td><td>52.6 phút</td><td>4.32 phút</td></tr>
+              <tr><td>99.999% (năm số 9)</td><td>5.25 phút</td><td>25.9 giây</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Availability nối tiếp vs song song</h3>
+        <div class="diagram">Nối tiếp (giảm):   Total = A(Foo) × A(Bar)            → 99.9% × 99.9% = 99.8%
+Song song (tăng):  Total = 1 − (1−A(Foo)) × (1−A(Bar)) → hai 99.9% = 99.9999%</div>
+        <div class="note info">
+          <span class="note-title">ℹ️ Availability vs Reliability; HA vs Fault Tolerance</span>
+          <p>Hệ thống <em>reliable</em> thì luôn <em>available</em>, nhưng available chưa chắc reliable. <strong>Fault-tolerant</strong>: không gián đoạn dịch vụ (đòi dư thừa phần cứng toàn phần, rất đắt). <strong>High availability</strong>: gián đoạn tối thiểu (rẻ hơn).</p>
+        </div>
+
+        <h2>Scalability (Khả năng mở rộng)</h2>
+        <p>Là mức độ hệ thống phản ứng tốt khi thêm/bớt tài nguyên để đáp ứng nhu cầu.</p>
+        <figure class="fig fig-md"><img src="../assets/img/scalability.png" alt="Vertical scaling vs Horizontal scaling" loading="lazy" /><figcaption>Vertical scaling (máy khỏe hơn) so với Horizontal scaling (thêm nhiều máy)</figcaption></figure>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th></th><th>Vertical Scaling (scale up)</th><th>Horizontal Scaling (scale out)</th></tr></thead>
+            <tbody>
+              <tr><td>Cách làm</td><td>Tăng sức mạnh cho <strong>một máy</strong> (CPU/RAM).</td><td>Thêm <strong>nhiều máy</strong> vào pool.</td></tr>
+              <tr><td>Ưu điểm</td><td>Đơn giản, dễ quản lý, dữ liệu nhất quán.</td><td>Tăng redundancy, chịu lỗi tốt, linh hoạt, dễ nâng cấp.</td></tr>
+              <tr><td>Nhược điểm</td><td>Rủi ro downtime cao, khó nâng cấp, là SPOF.</td><td>Phức tạp hơn, dễ bất nhất dữ liệu, tăng tải downstream.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note tip">
+          <span class="note-title">💡 Ghi nhớ</span>
+          <p>Scale up = mua máy <em>khỏe hơn</em> (có giới hạn vật lý). Scale out = mua <em>thêm máy</em> (gần như không giới hạn nhưng phức tạp). Hệ thống lớn gần như luôn cần scale out.</p>
+        </div>
+
+        <h2>Storage (Lưu trữ)</h2>
+        <h3>RAID (Redundant Array of Independent Disks)</h3>
+        <p>Lưu cùng dữ liệu trên nhiều ổ để chống hỏng ổ:</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>RAID</th><th>Mô tả</th><th>Min ổ</th><th>Chịu lỗi</th></tr></thead>
+            <tbody>
+              <tr><td>RAID 0</td><td>Striping (chia đều)</td><td>2</td><td>Không</td></tr>
+              <tr><td>RAID 1</td><td>Mirroring (nhân bản)</td><td>2</td><td>1 ổ</td></tr>
+              <tr><td>RAID 5</td><td>Striping + parity</td><td>3</td><td>1 ổ</td></tr>
+              <tr><td>RAID 6</td><td>Striping + double parity</td><td>4</td><td>2 ổ</td></tr>
+              <tr><td>RAID 10</td><td>Striping + Mirroring</td><td>4</td><td>1 ổ mỗi nhóm</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Các loại storage</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Loại</th><th>Lưu thế nào</th><th>Ví dụ</th></tr></thead>
+            <tbody>
+              <tr><td><strong>File storage</strong></td><td>Dạng file trong cây thư mục phân cấp; thân thiện, cần đường dẫn đầy đủ.</td><td>Amazon EFS, Azure Files</td></tr>
+              <tr><td><strong>Block storage</strong></td><td>Chia dữ liệu thành các <em>block</em> có ID, đặt linh hoạt; tách dữ liệu khỏi môi trường người dùng.</td><td>Amazon EBS</td></tr>
+              <tr><td><strong>Object storage</strong></td><td>Chia file thành <em>object</em>, lưu trong một kho duy nhất trải trên nhiều hệ thống mạng.</td><td>Amazon S3, Azure Blob, GCS</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>NAS</strong> (Network Attached Storage): thiết bị lưu trữ gắn vào mạng cho phép truy xuất tập trung. <strong>HDFS</strong> (Hadoop Distributed File System): hệ thống file phân tán chạy trên phần cứng phổ thông, chịu lỗi cao, lưu file lớn thành chuỗi <em>block</em> được <strong>replicate</strong>.</p>
+
+        <div class="note tip">
+          <span class="note-title">✅ Tóm tắt bài 5</span>
+          <p>Availability đo bằng "số 9" (99.9% = ~8.7h downtime/năm); nối tiếp làm giảm, song song làm tăng. Scale up = máy khỏe hơn, scale out = nhiều máy hơn (ưu tiên cho hệ lớn). Storage: RAID chống hỏng ổ; file/block/object cho mục đích khác nhau (object storage cho media/cloud).</p>
+        </div>
+
+        <div class="pager">
+          <a href="04-caching-cdn-proxy.html"><div class="dir">← Bài trước</div><div class="ttl">Caching, CDN &amp; Proxy</div></a>
+          <a class="next" href="06-databases.html"><div class="dir">Bài tiếp theo →</div><div class="ttl">Databases: SQL vs NoSQL</div></a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="../assets/script.js"></script>
+</body>
+</html>

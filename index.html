@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Khóa học System Design — Từ cơ bản đến nâng cao</title>
+  <meta name="description" content="Khóa học System Design bằng tiếng Việt, biên soạn từ repo karanpratapsingh/system-design, phân chia từ cơ bản đến nâng cao." />
+  <link rel="stylesheet" href="assets/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+  <style>
+    .hero { padding: 56px 0 10px; }
+    .hero h1 { font-size: 2.6rem; }
+    .hero .tag { color: var(--accent-2); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; font-size: .82rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; margin: 18px 0 8px; }
+    .card { display: block; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-card); transition: border-color .15s, transform .15s; }
+    .card:hover { border-color: var(--accent); transform: translateY(-3px); text-decoration: none; }
+    .card .num { font-family: var(--mono); font-size: .78rem; color: var(--text-faint); }
+    .card .ct { font-weight: 700; color: var(--text); margin: 4px 0 6px; font-size: 1.04rem; }
+    .card .cd { font-size: .86rem; color: var(--text-dim); line-height: 1.55; }
+    .level-head { display: flex; align-items: center; gap: 12px; margin: 40px 0 6px; }
+    .level-head h2 { border: none; margin: 0; padding: 0; }
+    .level-head .meta { color: var(--text-faint); font-size: .85rem; }
+    .intro-box { background: linear-gradient(135deg, rgba(20,184,166,.12), rgba(45,212,191,.04)); border: 1px solid rgba(20,184,166,.25); border-radius: var(--radius); padding: 20px 24px; margin: 24px 0; }
+  </style>
+</head>
+<body>
+  <button class="menu-btn" id="menuBtn">☰</button>
+  <div class="overlay" id="overlay"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header"><a href="index.html" class="brand"><span class="logo">⚙</span> System Design <span>Khóa học</span></a></div>
+      <nav class="nav">
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-basic"></span> Cơ bản</div>
+          <a href="lessons/01-gioi-thieu.html">1. Giới thiệu System Design</a>
+          <a href="lessons/02-mang-co-ban.html">2. Mạng cơ bản (IP, DNS...)</a>
+          <a href="lessons/03-load-balancing-clustering.html">3. Load Balancing &amp; Clustering</a>
+          <a href="lessons/04-caching-cdn-proxy.html">4. Caching, CDN &amp; Proxy</a>
+          <a href="lessons/05-availability-scalability-storage.html">5. Availability, Scalability &amp; Storage</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-inter"></span> Trung cấp</div>
+          <a href="lessons/06-databases.html">6. Databases: SQL vs NoSQL</a>
+          <a href="lessons/07-database-scaling.html">7. Mở rộng Database</a>
+          <a href="lessons/08-consistency.html">8. Nhất quán dữ liệu (CAP...)</a>
+          <a href="lessons/09-architecture.html">9. Kiến trúc ứng dụng</a>
+          <a href="lessons/10-communication.html">10. Giao tiếp &amp; API</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-adv"></span> Nâng cao</div>
+          <a href="lessons/11-messaging.html">11. Messaging bất đồng bộ</a>
+          <a href="lessons/12-distributed-patterns.html">12. Mẫu hệ phân tán</a>
+          <a href="lessons/13-security-infra.html">13. Bảo mật &amp; Hạ tầng</a>
+          <a href="lessons/14-interviews.html">14. Phỏng vấn &amp; Case Studies</a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="content">
+        <div class="hero">
+          <div class="tag">Distributed Systems · Scalability · Interviews</div>
+          <h1>Khóa học System Design từ cơ bản đến nâng cao</h1>
+          <p class="lead">Biên soạn lại từ repo nổi tiếng <a href="https://github.com/karanpratapsingh/system-design" target="_blank" rel="noopener">karanpratapsingh/system-design</a> (43k+ ⭐) bằng tiếng Việt, kèm bảng so sánh, sơ đồ và case study — phân chia rõ 3 cấp độ để bạn biết nội dung nào <strong>cần nắm chắc</strong> và nội dung nào là <strong>nâng cao</strong>.</p>
+        </div>
+
+        <div class="intro-box">
+          <strong>Cách học hiệu quả:</strong> Học tuần tự theo số thứ tự. Nắm chắc nhóm <span class="badge badge-basic">Cơ bản</span> (networking, caching, scaling) trước — đây là "từ vựng" của System Design. Sang <span class="badge badge-inter">Trung cấp</span> để hiểu dữ liệu &amp; kiến trúc. Nhóm <span class="badge badge-adv">Nâng cao</span> đỉnh điểm là Bài 14 — vận dụng tất cả để giải <strong>5 case study phỏng vấn</strong> thực tế.
+        </div>
+
+        <div class="level-head">
+          <span class="badge badge-basic">🟢 Cơ bản</span>
+          <span class="meta">Nền tảng bắt buộc — "từ vựng" của System Design</span>
+        </div>
+        <div class="grid">
+          <a class="card" href="lessons/01-gioi-thieu.html"><div class="num">Bài 01</div><div class="ct">Giới thiệu System Design</div><div class="cd">System Design là gì, tại sao quan trọng, tư duy tổng thể từ hạ tầng đến dữ liệu.</div></a>
+          <a class="card" href="lessons/02-mang-co-ban.html"><div class="num">Bài 02</div><div class="ct">Mạng cơ bản</div><div class="cd">IP, mô hình OSI, TCP vs UDP, và cách DNS phân giải tên miền hoạt động.</div></a>
+          <a class="card" href="lessons/03-load-balancing-clustering.html"><div class="num">Bài 03</div><div class="ct">Load Balancing &amp; Clustering</div><div class="cd">Phân phối tải, thuật toán định tuyến, cluster active-active/passive.</div></a>
+          <a class="card" href="lessons/04-caching-cdn-proxy.html"><div class="num">Bài 04</div><div class="ct">Caching, CDN &amp; Proxy</div><div class="cd">Cache hit/miss, chiến lược write, eviction, CDN push/pull, forward/reverse proxy.</div></a>
+          <a class="card" href="lessons/05-availability-scalability-storage.html"><div class="num">Bài 05</div><div class="ct">Availability, Scalability &amp; Storage</div><div class="cd">"Số 9" của availability, scale dọc vs ngang, RAID, file/block/object storage.</div></a>
+        </div>
+
+        <div class="level-head">
+          <span class="badge badge-inter">🟡 Trung cấp</span>
+          <span class="meta">Dữ liệu &amp; kiến trúc hệ thống</span>
+        </div>
+        <div class="grid">
+          <a class="card" href="lessons/06-databases.html"><div class="num">Bài 06</div><div class="ct">Databases: SQL vs NoSQL</div><div class="cd">DBMS, các loại NoSQL (document/key-value/graph...), khi nào chọn cái nào.</div></a>
+          <a class="card" href="lessons/07-database-scaling.html"><div class="num">Bài 07</div><div class="ct">Mở rộng Database</div><div class="cd">Replication, Sharding, Consistent Hashing, Indexes, Normalization, Federation.</div></a>
+          <a class="card" href="lessons/08-consistency.html"><div class="num">Bài 08</div><div class="ct">Nhất quán dữ liệu</div><div class="cd">ACID vs BASE, định lý CAP &amp; PACELC, Transactions, 2PC/3PC, Saga.</div></a>
+          <a class="card" href="lessons/09-architecture.html"><div class="num">Bài 09</div><div class="ct">Kiến trúc ứng dụng</div><div class="cd">N-tier, Monolith vs Microservices, API Gateway, BFF.</div></a>
+          <a class="card" href="lessons/10-communication.html"><div class="num">Bài 10</div><div class="ct">Giao tiếp &amp; API</div><div class="cd">REST vs GraphQL vs gRPC; Long polling vs WebSockets vs SSE.</div></a>
+        </div>
+
+        <div class="level-head">
+          <span class="badge badge-adv">🔴 Nâng cao</span>
+          <span class="meta">Hệ phân tán, bảo mật &amp; phỏng vấn</span>
+        </div>
+        <div class="grid">
+          <a class="card" href="lessons/11-messaging.html"><div class="num">Bài 11</div><div class="ct">Messaging bất đồng bộ</div><div class="cd">Message Brokers, Queues, Pub-Sub, ESB, EDA, Event Sourcing, CQRS.</div></a>
+          <a class="card" href="lessons/12-distributed-patterns.html"><div class="num">Bài 12</div><div class="ct">Mẫu hệ phân tán</div><div class="cd">Geohashing/Quadtrees, Circuit Breaker, Rate Limiting, Service Discovery, SLA/SLO/SLI, DR.</div></a>
+          <a class="card" href="lessons/13-security-infra.html"><div class="num">Bài 13</div><div class="ct">Bảo mật &amp; Hạ tầng</div><div class="cd">VMs vs Containers, OAuth 2.0/OIDC, SSO/SAML, SSL/TLS/mTLS.</div></a>
+          <a class="card" href="lessons/14-interviews.html"><div class="num">Bài 14</div><div class="ct">Phỏng vấn &amp; Case Studies</div><div class="cd">Quy trình 7 bước + thiết kế URL Shortener, WhatsApp, Twitter, Netflix, Uber.</div></a>
+        </div>
+
+        <div class="note info" style="margin-top:40px">
+          <span class="note-title">ℹ️ Nguồn</span>
+          <p>Toàn bộ nội dung tổng hợp &amp; dịch từ repo mã nguồn mở <a href="https://github.com/karanpratapsingh/system-design" target="_blank" rel="noopener">karanpratapsingh/system-design</a> (giấy phép code MIT, tài liệu CC BY 4.0). Đây là tài liệu rất phổ biến để chuẩn bị phỏng vấn System Design. Khuyến khích đọc thêm repo gốc để xem các <strong>sơ đồ (diagrams)</strong> trực quan đi kèm.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="assets/script.js"></script>
+</body>
+</html>

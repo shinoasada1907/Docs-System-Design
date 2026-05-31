@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bài 4: Caching, CDN &amp; Proxy — Khóa học System Design</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+</head>
+<body>
+  <button class="menu-btn" id="menuBtn">☰</button>
+  <div class="overlay" id="overlay"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header"><a href="../index.html" class="brand"><span class="logo">⚙</span> System Design <span>Khóa học</span></a></div>
+      <nav class="nav">
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-basic"></span> Cơ bản</div>
+          <a href="01-gioi-thieu.html">1. Giới thiệu System Design</a>
+          <a href="02-mang-co-ban.html">2. Mạng cơ bản (IP, DNS...)</a>
+          <a href="03-load-balancing-clustering.html">3. Load Balancing &amp; Clustering</a>
+          <a href="04-caching-cdn-proxy.html">4. Caching, CDN &amp; Proxy</a>
+          <a href="05-availability-scalability-storage.html">5. Availability, Scalability &amp; Storage</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-inter"></span> Trung cấp</div>
+          <a href="06-databases.html">6. Databases: SQL vs NoSQL</a>
+          <a href="07-database-scaling.html">7. Mở rộng Database</a>
+          <a href="08-consistency.html">8. Nhất quán dữ liệu (CAP...)</a>
+          <a href="09-architecture.html">9. Kiến trúc ứng dụng</a>
+          <a href="10-communication.html">10. Giao tiếp &amp; API</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-adv"></span> Nâng cao</div>
+          <a href="11-messaging.html">11. Messaging bất đồng bộ</a>
+          <a href="12-distributed-patterns.html">12. Mẫu hệ phân tán</a>
+          <a href="13-security-infra.html">13. Bảo mật &amp; Hạ tầng</a>
+          <a href="14-interviews.html">14. Phỏng vấn &amp; Case Studies</a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="content">
+        <div class="crumb"><span class="badge badge-basic">🟢 Cơ bản</span> · Bài 4 / 14</div>
+        <h1>Caching, CDN &amp; Proxy</h1>
+        <p class="lead">Ba "vũ khí" tăng tốc &amp; giảm tải hệ thống: cache (lưu tạm dữ liệu nóng), CDN (phân phối nội dung tĩnh toàn cầu), và proxy (trung gian giữa client và server).</p>
+
+        <h2>Caching</h2>
+        <p>Mục đích chính: <strong>tăng tốc truy xuất dữ liệu</strong> bằng cách giảm nhu cầu chạm vào tầng lưu trữ chậm hơn. Cache đánh đổi <em>dung lượng lấy tốc độ</em> — chỉ lưu một <strong>tập con</strong> dữ liệu tạm thời. Dựa trên nguyên lý <strong>locality of reference</strong>: "dữ liệu vừa được yêu cầu nhiều khả năng sẽ được yêu cầu lại".</p>
+        <figure class="fig"><img src="../assets/img/caching.png" alt="Cache nằm giữa ứng dụng và database" loading="lazy" /><figcaption>Cache nằm giữa ứng dụng và database, phục vụ dữ liệu nóng cực nhanh</figcaption></figure>
+        <div class="note info">
+          <span class="note-title">ℹ️ Cache hit vs Cache miss</span>
+          <p><strong>Cache hit</strong>: tìm thấy &amp; phục vụ từ cache. <strong>Cache miss</strong>: không có trong cache → phải lấy từ nguồn rồi ghi vào cache. (Hot/warm/cold cache mô tả tốc độ đọc tùy dữ liệu ở L1/L2/L3...)</p>
+        </div>
+
+        <h3>Chiến lược ghi (Cache write / invalidation)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Chiến lược</th><th>Cách hoạt động</th><th>Ưu / Nhược</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Write-through</strong></td><td>Ghi vào cache <em>và</em> DB đồng thời.</td><td>+ Nhất quán hoàn toàn / − Latency ghi cao.</td></tr>
+              <tr><td><strong>Write-around</strong></td><td>Ghi thẳng vào DB, bỏ qua cache.</td><td>+ Giảm latency ghi / − Tăng cache miss khi đọc lại.</td></tr>
+              <tr><td><strong>Write-back</strong></td><td>Ghi vào cache trước, sync DB bất đồng bộ.</td><td>+ Throughput ghi cao / − Rủi ro mất dữ liệu nếu cache chết.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <figure class="fig fig-md"><img src="../assets/img/write-through-cache.png" alt="Write-through cache" loading="lazy" /><figcaption><b>Write-through</b> — ghi cache &amp; DB đồng thời</figcaption></figure>
+        <figure class="fig fig-md"><img src="../assets/img/write-around-cache.png" alt="Write-around cache" loading="lazy" /><figcaption><b>Write-around</b> — ghi thẳng DB, bỏ qua cache</figcaption></figure>
+        <figure class="fig fig-md"><img src="../assets/img/write-back-cache.png" alt="Write-back cache" loading="lazy" /><figcaption><b>Write-back</b> — ghi cache trước, sync DB bất đồng bộ</figcaption></figure>
+
+        <h3>Chính sách loại bỏ (Eviction)</h3>
+        <p><strong>FIFO</strong> (vào trước ra trước) · <strong>LIFO</strong> (vào sau ra trước) · <strong>LRU</strong> (ít dùng gần đây nhất bị loại — phổ biến nhất) · <strong>MRU</strong> (dùng gần đây nhất bị loại) · <strong>LFU</strong> (ít dùng nhất bị loại) · <strong>RR</strong> (loại ngẫu nhiên).</p>
+
+        <div class="note danger">
+          <span class="note-title">🚨 Khi nào KHÔNG nên cache</span>
+          <p>Khi truy cập cache lâu ngang truy cập nguồn; khi request ít lặp lại / ngẫu nhiên cao; khi dữ liệu thay đổi liên tục (cache sẽ luôn out-of-sync). Cache <strong>không phải</strong> lưu trữ vĩnh viễn — nó nằm ở bộ nhớ dễ mất (volatile).</p>
+        </div>
+        <p><strong>Use cases:</strong> Database caching, CDN, DNS caching, API caching. <strong>Phân loại:</strong> Distributed cache (gộp RAM nhiều máy), Global cache (một cache dùng chung). <em>Ví dụ:</em> Redis, Memcached, Amazon ElastiCache.</p>
+        <figure class="fig fig-md"><img src="../assets/img/distributed-cache.png" alt="Distributed cache" loading="lazy" /><figcaption><b>Distributed cache</b> — gộp RAM của nhiều máy thành một kho in-memory</figcaption></figure>
+        <figure class="fig fig-md"><img src="../assets/img/global-cache.png" alt="Global cache" loading="lazy" /><figcaption><b>Global cache</b> — một cache dùng chung cho mọi node ứng dụng</figcaption></figure>
+
+        <h2>CDN (Content Delivery Network)</h2>
+        <p>Là nhóm server phân tán theo địa lý, phối hợp để <strong>phân phối nội dung tĩnh nhanh</strong> (HTML/CSS/JS, ảnh, video). <strong>Origin server</strong> giữ bản gốc; <strong>edge servers</strong> rải khắp thế giới cache nội dung gần người dùng.</p>
+        <div class="diagram">User (UK) ──▶ Edge server (London)   ◀── cache ── Origin server (USA)
+                 (nhanh, latency thấp)         (chỉ lấy khi cache miss)</div>
+        <figure class="fig"><img src="../assets/img/cdn-map.png" alt="Bản đồ edge servers của CDN" loading="lazy" /><figcaption>Edge server của CDN trải khắp thế giới, gần người dùng cuối</figcaption></figure>
+        <figure class="fig"><img src="../assets/img/cdn.png" alt="Cách CDN hoạt động" loading="lazy" /><figcaption>User được phục vụ từ edge gần nhất; origin chỉ bị gọi khi cache miss</figcaption></figure>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Loại</th><th>Cách hoạt động</th><th>Phù hợp</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Push CDN</strong></td><td>Bạn tự upload nội dung lên CDN khi có thay đổi.</td><td>Site traffic thấp / nội dung ít thay đổi.</td></tr>
+              <tr><td><strong>Pull CDN</strong></td><td>CDN tự kéo nội dung từ origin khi có request (cache miss).</td><td>Site traffic cao, ít bảo trì.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>Lợi ích:</strong> tăng availability/redundancy, giảm chi phí băng thông, cải thiện bảo mật &amp; hiệu năng. <strong>Nhược:</strong> phí cao với traffic lớn, một số quốc gia/tổ chức chặn CDN, có thể bất lợi nếu khán giả ở nơi không có edge. <em>Ví dụ:</em> CloudFront, Google Cloud CDN, Cloudflare, Fastly.</p>
+
+        <h2>Proxy</h2>
+        <p>Là trung gian (phần cứng/mềm) giữa client và server — lọc, log, hoặc biến đổi request (thêm/bớt header, mã hóa, nén).</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th></th><th>Forward Proxy</th><th>Reverse Proxy</th></tr></thead>
+            <tbody>
+              <tr><td>Đứng trước</td><td>Nhóm <strong>client</strong></td><td>Một hoặc nhiều <strong>server</strong></td></tr>
+              <tr><td>Bảo vệ ai</td><td>Ẩn danh client, vượt chặn, lọc nội dung</td><td>Bảo vệ server: caching, SSL, load balancing, bảo mật</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figure class="fig fig-md"><img src="../assets/img/forward-proxy.png" alt="Forward proxy" loading="lazy" /><figcaption><b>Forward proxy</b> — đứng trước nhóm client, đại diện client nói chuyện với server</figcaption></figure>
+        <figure class="fig fig-md"><img src="../assets/img/reverse-proxy.png" alt="Reverse proxy" loading="lazy" /><figcaption><b>Reverse proxy</b> — đứng trước server, client không nói trực tiếp với server</figcaption></figure>
+
+        <div class="note info">
+          <span class="note-title">ℹ️ Load Balancer vs Reverse Proxy</span>
+          <p>LB hữu ích khi có <strong>nhiều server</strong> (định tuyến tới nhóm server cùng chức năng). Reverse proxy hữu ích <strong>ngay cả khi chỉ có 1 server</strong>. Reverse proxy <em>có thể</em> đóng vai LB, nhưng LB thì không làm ngược lại được. <em>Ví dụ:</em> Nginx, HAProxy, Traefik, Envoy.</p>
+        </div>
+
+        <div class="note tip">
+          <span class="note-title">✅ Tóm tắt bài 4</span>
+          <p>Cache lưu tạm dữ liệu nóng (write-through/around/back, eviction LRU...) — đừng cache dữ liệu thay đổi liên tục. CDN đưa nội dung tĩnh tới edge gần user (push cho traffic thấp, pull cho traffic cao). Proxy là trung gian: forward (che client), reverse (che &amp; bảo vệ server).</p>
+        </div>
+
+        <div class="pager">
+          <a href="03-load-balancing-clustering.html"><div class="dir">← Bài trước</div><div class="ttl">Load Balancing &amp; Clustering</div></a>
+          <a class="next" href="05-availability-scalability-storage.html"><div class="dir">Bài tiếp theo →</div><div class="ttl">Availability, Scalability &amp; Storage</div></a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="../assets/script.js"></script>
+</body>
+</html>

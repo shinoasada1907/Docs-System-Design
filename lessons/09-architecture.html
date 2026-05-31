@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bài 9: Kiến trúc ứng dụng — Khóa học System Design</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+</head>
+<body>
+  <button class="menu-btn" id="menuBtn">☰</button>
+  <div class="overlay" id="overlay"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header"><a href="../index.html" class="brand"><span class="logo">⚙</span> System Design <span>Khóa học</span></a></div>
+      <nav class="nav">
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-basic"></span> Cơ bản</div>
+          <a href="01-gioi-thieu.html">1. Giới thiệu System Design</a>
+          <a href="02-mang-co-ban.html">2. Mạng cơ bản (IP, DNS...)</a>
+          <a href="03-load-balancing-clustering.html">3. Load Balancing &amp; Clustering</a>
+          <a href="04-caching-cdn-proxy.html">4. Caching, CDN &amp; Proxy</a>
+          <a href="05-availability-scalability-storage.html">5. Availability, Scalability &amp; Storage</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-inter"></span> Trung cấp</div>
+          <a href="06-databases.html">6. Databases: SQL vs NoSQL</a>
+          <a href="07-database-scaling.html">7. Mở rộng Database</a>
+          <a href="08-consistency.html">8. Nhất quán dữ liệu (CAP...)</a>
+          <a href="09-architecture.html">9. Kiến trúc ứng dụng</a>
+          <a href="10-communication.html">10. Giao tiếp &amp; API</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-adv"></span> Nâng cao</div>
+          <a href="11-messaging.html">11. Messaging bất đồng bộ</a>
+          <a href="12-distributed-patterns.html">12. Mẫu hệ phân tán</a>
+          <a href="13-security-infra.html">13. Bảo mật &amp; Hạ tầng</a>
+          <a href="14-interviews.html">14. Phỏng vấn &amp; Case Studies</a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="content">
+        <div class="crumb"><span class="badge badge-inter">🟡 Trung cấp</span> · Bài 9 / 14</div>
+        <h1>Kiến trúc ứng dụng</h1>
+        <p class="lead">Cách tổ chức ứng dụng ở mức kiến trúc: N-tier, cuộc chiến Monolith vs Microservices, và vai trò của API Gateway.</p>
+
+        <h2>N-tier Architecture</h2>
+        <p>Chia ứng dụng thành các <strong>layer</strong> (lớp logic) và <strong>tier</strong> (tầng vật lý). Layer cao có thể dùng layer thấp, không ngược lại. Tách tier vật lý cải thiện scalability &amp; resiliency nhưng thêm latency mạng.</p>
+        <ul>
+          <li><strong>3-Tier</strong> (phổ biến): Presentation → Business Logic → Data Access.</li>
+          <li><strong>2-Tier</strong>: Presentation (client) ↔ Data store trực tiếp.</li>
+          <li><strong>1-Tier</strong>: tất cả trên một máy/app (như chạy app trên một PC).</li>
+        </ul>
+        <figure class="fig fig-md"><img src="../assets/img/n-tier-architecture.png" alt="Kiến trúc N-tier" loading="lazy" /><figcaption>Kiến trúc 3-tier: Presentation → Business Logic → Data Access</figcaption></figure>
+
+        <h2>Monolith vs Microservices ⭐</h2>
+        <p><strong>Monolith</strong>: ứng dụng tự chứa, xây như một đơn vị duy nhất, làm mọi bước cho một nhu cầu nghiệp vụ.</p>
+        <p><strong>Microservices</strong>: tập hợp các dịch vụ nhỏ, tự chủ, mỗi service triển khai <strong>một business capability</strong> trong một <em>bounded context</em>, có codebase &amp; <strong>database riêng</strong> (database-per-service), deploy độc lập.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th></th><th>Monolith</th><th>Microservices</th></tr></thead>
+            <tbody>
+              <tr><td>Phát triển ban đầu</td><td>Đơn giản, dễ debug/test</td><td>Phức tạp (hệ phân tán)</td></tr>
+              <tr><td>Giao tiếp nội bộ</td><td>Nhanh, đáng tin (in-process)</td><td>Qua mạng (latency, thách thức)</td></tr>
+              <tr><td>Deploy</td><td>Redeploy toàn bộ mỗi lần update</td><td>Deploy từng service độc lập</td></tr>
+              <tr><td>Scale</td><td>Khó, tightly coupled</td><td>Scale từng service riêng</td></tr>
+              <tr><td>Reliability</td><td>1 bug có thể sập cả hệ thống</td><td>Cô lập lỗi tốt hơn</td></tr>
+              <tr><td>Tech stack</td><td>Cam kết một stack</td><td>Tự do chọn stack mỗi service</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figure class="fig fig-md"><img src="../assets/img/monolith.png" alt="Kiến trúc Monolith" loading="lazy" /><figcaption><b>Monolith</b> — một khối duy nhất, một database chung</figcaption></figure>
+        <figure class="fig fig-md"><img src="../assets/img/microservices.png" alt="Kiến trúc Microservices" loading="lazy" /><figcaption><b>Microservices</b> — nhiều service nhỏ, mỗi service có database riêng</figcaption></figure>
+
+        <div class="note danger">
+          <span class="note-title">🚨 Bạn (có thể) KHÔNG cần microservices</span>
+          <p>Microservices giải quyết vấn đề <strong>tổ chức (organizational)</strong> nhiều hơn công nghệ. Nên <strong>bắt đầu bằng monolith</strong> khi xây hệ thống mới. Chỉ tách microservices khi: team quá lớn cho một codebase, bị block bởi team khác, có business value rõ ràng. Cảnh giác <em>"distributed monolith"</em> — trông như microservices nhưng vẫn tightly coupled (share database, cần giao tiếp low-latency, phụ thuộc lẫn nhau).</p>
+        </div>
+        <div class="note info">
+          <span class="note-title">ℹ️ Modular Monolith — lựa chọn trung gian</span>
+          <p>Deploy một app duy nhất nhưng tách code thành các <strong>module độc lập</strong> theo feature → giảm phụ thuộc, dễ nâng cấp từng phần. Là bước đệm tốt trước khi (nếu cần) tách microservices.</p>
+        </div>
+        <figure class="fig"><img src="../assets/img/architecture-range.png" alt="Phổ kiến trúc từ monolith đến microservices" loading="lazy" /><figcaption>Phổ kiến trúc: từ Monolith → Modular Monolith → Microservices</figcaption></figure>
+
+        <h2>API Gateway</h2>
+        <p>Là công cụ quản lý API, nằm giữa client và một tập backend service — <strong>single entry point</strong> đóng gói kiến trúc nội bộ và cung cấp API tùy biến cho từng client.</p>
+        <p><strong>Vì sao cần?</strong> Microservices thường cung cấp API fine-grained → client phải gọi nhiều service. API Gateway gom lại một điểm vào với nhiều tính năng quản lý.</p>
+        <figure class="fig fig-md"><img src="../assets/img/api-gateway.png" alt="API Gateway" loading="lazy" /><figcaption>API Gateway — single entry point đứng giữa client và các microservice</figcaption></figure>
+        <p><strong>Tính năng:</strong> authentication/authorization, service discovery, reverse proxy, caching, security, retry &amp; circuit breaking, load balancing, logging/tracing, API composition, rate limiting/throttling, versioning, routing, IP whitelisting.</p>
+        <div class="note warn">
+          <span class="note-title">⚠️ Nhược điểm</span>
+          <p>Có thể là single point of failure, ảnh hưởng performance, thành bottleneck nếu không scale đúng, và cấu hình phức tạp. → Nhớ chạy bản dự phòng.</p>
+        </div>
+        <div class="note info">
+          <span class="note-title">ℹ️ Backend For Frontend (BFF)</span>
+          <p>Tạo backend riêng cho từng loại frontend (web/mobile...). Khi data từ microservice không đúng format/filter mà frontend cần, BFF là lớp trung gian lấy &amp; định dạng lại data. <em>GraphQL hoạt động rất tốt như một BFF.</em></p>
+        </div>
+        <figure class="fig fig-md"><img src="../assets/img/backend-for-frontend.png" alt="Backend For Frontend" loading="lazy" /><figcaption>BFF — backend riêng cho từng loại frontend (web, mobile...)</figcaption></figure>
+
+        <div class="note tip">
+          <span class="note-title">✅ Tóm tắt bài 9</span>
+          <p>N-tier tách layer/tier (3-tier phổ biến). Monolith đơn giản lúc đầu, microservices scale &amp; cô lập lỗi tốt nhưng phức tạp — <strong>đừng vội tách</strong>, hãy bắt đầu monolith. API Gateway = single entry point gom nhiều tính năng (auth, routing, rate limit...); BFF tùy biến backend theo từng frontend.</p>
+        </div>
+
+        <div class="pager">
+          <a href="08-consistency.html"><div class="dir">← Bài trước</div><div class="ttl">Nhất quán dữ liệu</div></a>
+          <a class="next" href="10-communication.html"><div class="dir">Bài tiếp theo →</div><div class="ttl">Giao tiếp &amp; API</div></a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="../assets/script.js"></script>
+</body>
+</html>

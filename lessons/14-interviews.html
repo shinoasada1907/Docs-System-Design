@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bài 14: Phỏng vấn &amp; Case Studies — Khóa học System Design</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+</head>
+<body>
+  <button class="menu-btn" id="menuBtn">☰</button>
+  <div class="overlay" id="overlay"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header"><a href="../index.html" class="brand"><span class="logo">⚙</span> System Design <span>Khóa học</span></a></div>
+      <nav class="nav">
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-basic"></span> Cơ bản</div>
+          <a href="01-gioi-thieu.html">1. Giới thiệu System Design</a>
+          <a href="02-mang-co-ban.html">2. Mạng cơ bản (IP, DNS...)</a>
+          <a href="03-load-balancing-clustering.html">3. Load Balancing &amp; Clustering</a>
+          <a href="04-caching-cdn-proxy.html">4. Caching, CDN &amp; Proxy</a>
+          <a href="05-availability-scalability-storage.html">5. Availability, Scalability &amp; Storage</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-inter"></span> Trung cấp</div>
+          <a href="06-databases.html">6. Databases: SQL vs NoSQL</a>
+          <a href="07-database-scaling.html">7. Mở rộng Database</a>
+          <a href="08-consistency.html">8. Nhất quán dữ liệu (CAP...)</a>
+          <a href="09-architecture.html">9. Kiến trúc ứng dụng</a>
+          <a href="10-communication.html">10. Giao tiếp &amp; API</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-adv"></span> Nâng cao</div>
+          <a href="11-messaging.html">11. Messaging bất đồng bộ</a>
+          <a href="12-distributed-patterns.html">12. Mẫu hệ phân tán</a>
+          <a href="13-security-infra.html">13. Bảo mật &amp; Hạ tầng</a>
+          <a href="14-interviews.html">14. Phỏng vấn &amp; Case Studies</a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="content">
+        <div class="crumb"><span class="badge badge-adv">🔴 Nâng cao</span> · Bài 14 / 14</div>
+        <h1>Phỏng vấn &amp; Case Studies</h1>
+        <p class="lead">Bài tổng hợp: quy trình 7 bước để giải một câu hỏi system design, rồi áp dụng vào 5 case study kinh điển — URL Shortener, WhatsApp, Twitter, Netflix, Uber.</p>
+
+        <div class="note info">
+          <span class="note-title">ℹ️ Bản chất câu hỏi phỏng vấn</span>
+          <p>Câu hỏi system design cố tình <strong>mơ hồ, không có đáp án đúng duy nhất</strong>. Mấu chốt là <strong>đối thoại hai chiều</strong> với người phỏng vấn — thể hiện tư duy trade-offs.</p>
+        </div>
+
+        <h2>Quy trình 7 bước</h2>
+        <ol>
+          <li><strong>Làm rõ yêu cầu (Requirements)</strong> — chia 3 nhóm: <em>Functional</em> (tính năng cốt lõi), <em>Non-functional</em> (latency, availability, scalability...), <em>Extended</em> ("nice to have": analytics, monitoring).</li>
+          <li><strong>Ước lượng &amp; ràng buộc (Estimation)</strong> — quy mô? tỉ lệ đọc/ghi? requests/giây? dung lượng lưu trữ?</li>
+          <li><strong>Thiết kế data model</strong> — định nghĩa entity &amp; quan hệ; bao nhiêu bảng? SQL hay NoSQL?</li>
+          <li><strong>Thiết kế API</strong> — interface đơn giản (tham số, hàm), không cần code. Vd <code>createUser(name, email): User</code>.</li>
+          <li><strong>Thiết kế tổng thể (High-Level)</strong> — xác định component (Load Balancer, API Gateway...); monolith hay microservices? loại database?</li>
+          <li><strong>Thiết kế chi tiết (Detailed)</strong> — đi sâu component chính; nêu nhiều phương án + ưu/nhược. Partition data? cache? xử lý traffic spike?</li>
+          <li><strong>Tìm &amp; xử lý bottleneck</strong> — đủ replica? có SPOF? cần sharding? cải thiện độ bền cache?</li>
+        </ol>
+        <div class="note tip">
+          <span class="note-title">💡 Mẹo</span>
+          <p>Đọc <strong>engineering blog</strong> của công ty bạn phỏng vấn để biết tech stack &amp; ưu tiên của họ. Đừng giáo điều ("NoSQL luôn tốt hơn" gây ấn tượng xấu) — luôn lập luận theo trade-offs.</p>
+        </div>
+
+        <hr />
+
+        <h2>Case Study 1 — URL Shortener</h2>
+        <p>Tạo alias ngắn cho URL dài (như Bitly, TinyURL). <strong>Yêu cầu:</strong> sinh alias ngắn duy nhất; redirect; link hết hạn sau một thời gian. Non-functional: HA, latency thấp, scale.</p>
+        <p><strong>Ước lượng:</strong> read-heavy, tỉ lệ đọc/ghi <strong>100:1</strong>, 100M link/tháng → ~40 writes/s, ~4000 reads/s; lưu ~6 TB cho 10 năm.</p>
+        <p><strong>Data model:</strong> dữ liệu ít quan hệ → ưu tiên NoSQL. Bảng <code>users</code> &amp; <code>urls</code> (<code>hash</code>, <code>originalURL</code>, <code>expiration</code>, <code>userID</code> — index cột <code>hash</code>).</p>
+        <figure class="fig fig-md"><img src="../assets/img/url-shortener-datamodel.png" alt="URL Shortener data model" loading="lazy" /><figcaption>Data model của URL Shortener</figcaption></figure>
+        <div class="note info">
+          <span class="note-title">🔑 Cốt lõi: sinh key duy nhất</span>
+          <p><strong>Base62</strong> (A-Z, a-z, 0-9): với 7 ký tự → 62⁷ ≈ 3.5 nghìn tỉ URL — đơn giản nhưng không chống trùng. <strong>MD5</strong>: băm rồi lấy 7 ký tự — có rủi ro trùng. <strong>Counter</strong> + <strong>Zookeeper</strong>: mỗi server được Zookeeper cấp một <em>khoảng counter</em> riêng → đảm bảo không trùng &amp; không có SPOF. Tốt nhất là một <strong>Key Generation Service (KGS)</strong> sinh sẵn key.</p>
+        </div>
+        <p><strong>Luồng tạo:</strong> API server xin key từ KGS → ghi DB + cache → trả <code>HTTP 201</code>. <strong>Luồng truy cập:</strong> kiểm cache → miss thì lấy DB &amp; trả <code>HTTP 301</code> (redirect); không có thì <code>HTTP 404</code>. <strong>Dọn link hết hạn:</strong> active (cron) hoặc passive (lazy). Cache LRU. Partition bằng consistent hashing.</p>
+        <figure class="fig"><img src="../assets/img/url-shortener-basic-design.png" alt="URL Shortener thiết kế cơ bản" loading="lazy" /><figcaption>Thiết kế cơ bản của URL Shortener</figcaption></figure>
+        <figure class="fig"><img src="../assets/img/url-shortener-advanced-design.png" alt="URL Shortener thiết kế nâng cao" loading="lazy" /><figcaption>Thiết kế nâng cao: KGS, cache, API Gateway, replica</figcaption></figure>
+
+        <h2>Case Study 2 — WhatsApp</h2>
+        <p>Nhắn tin tức thời. <strong>Yêu cầu:</strong> chat 1-1; group (≤100 người); chia sẻ file; (mở rộng: sent/delivered/read receipt, last-seen, push notification).</p>
+        <p><strong>Ước lượng:</strong> 50M DAU, ~40 message/user/ngày → 2 tỉ message/ngày, ~24K req/s; ~38 PB cho 10 năm (chủ yếu là media).</p>
+        <p><strong>Kiến trúc microservices:</strong> User Service (HTTP, auth), <strong>Chat Service</strong> (<strong>WebSockets</strong> cho nhắn tin), Notification Service, Presence Service (last-seen), Media Service. Giao tiếp nội bộ: gRPC + service discovery.</p>
+        <figure class="fig fig-md"><img src="../assets/img/whatsapp-datamodel.png" alt="WhatsApp data model" loading="lazy" /><figcaption>Data model của WhatsApp (users, chats, messages, groups...)</figcaption></figure>
+        <figure class="fig"><img src="../assets/img/whatsapp-basic-design.png" alt="WhatsApp thiết kế cơ bản" loading="lazy" /><figcaption>Thiết kế cơ bản của WhatsApp</figcaption></figure>
+        <div class="note info">
+          <span class="note-title">🔑 Quyết định thiết kế</span>
+          <p><strong>Real-time:</strong> chọn <strong>Push + WebSockets</strong> (full-duplex, latency thấp) thay vì pull/polling. <strong>Last-seen:</strong> cơ chế <em>heartbeat</em> lưu timestamp vào cache (Redis). <strong>Notification:</strong> nếu user offline → đẩy event vào <em>message queue</em> (SQS/RabbitMQ), Notification Service gửi tới <strong>FCM</strong> (Android) / <strong>APNS</strong> (iOS). <strong>Media:</strong> object storage (S3) + CDN. Dùng <strong>API Gateway</strong> hỗ trợ nhiều protocol (HTTP/WebSocket/TCP).</p>
+        </div>
+
+        <figure class="fig"><img src="../assets/img/whatsapp-advanced-design.png" alt="WhatsApp thiết kế nâng cao" loading="lazy" /><figcaption>Thiết kế nâng cao của WhatsApp: WebSocket, queue, FCM/APNS, API Gateway</figcaption></figure>
+
+        <h2>Case Study 3 — Twitter</h2>
+        <p>Mạng xã hội với "tweet" ≤280 ký tự. <strong>Yêu cầu:</strong> đăng tweet; follow; newsfeed; search. <strong>Ước lượng:</strong> 200M DAU, 1 tỉ tweet/ngày, ~12K req/s; ~19 PB / 10 năm.</p>
+        <div class="note info">
+          <span class="note-title">🔑 Tạo Newsfeed — 3 mô hình ⭐</span>
+          <p><strong>Pull (fan-out on load):</strong> dựng feed khi đọc — ít ghi nhưng có thể cũ. <strong>Push (fan-out on write):</strong> đẩy tweet vào feed mọi follower ngay — nhiều ghi. <strong>Hybrid:</strong> push cho user ít follower, pull cho "celebrity" nhiều follower. <strong>Ranking</strong> kiểu EdgeRank: <code>Rank = Affinity × Weight × Decay</code> (hiện đại dùng ML). <strong>Search/Trending:</strong> Elasticsearch (Apache Lucene); cache truy vấn/hashtag nóng. Notification qua Kafka. Mutual friends qua graph DB.</p>
+        </div>
+
+        <figure class="fig fig-md"><img src="../assets/img/twitter-datamodel.png" alt="Twitter data model" loading="lazy" /><figcaption>Data model của Twitter (users, tweets, followers, feeds...)</figcaption></figure>
+        <figure class="fig fig-md"><img src="../assets/img/newsfeed-pull-model.png" alt="Newsfeed Pull model" loading="lazy" /><figcaption><b>Pull model</b> (fan-out on load) — dựng feed khi đọc</figcaption></figure>
+        <figure class="fig fig-md"><img src="../assets/img/newsfeed-push-model.png" alt="Newsfeed Push model" loading="lazy" /><figcaption><b>Push model</b> (fan-out on write) — đẩy tweet vào feed follower ngay</figcaption></figure>
+        <figure class="fig"><img src="../assets/img/twitter-advanced-design.png" alt="Twitter thiết kế nâng cao" loading="lazy" /><figcaption>Thiết kế nâng cao của Twitter</figcaption></figure>
+
+        <h2>Case Study 4 — Netflix</h2>
+        <p>Streaming video. <strong>Yêu cầu:</strong> stream &amp; chia sẻ video; upload (content team); search; (resume playback, geo-blocking). <strong>Ước lượng:</strong> 200M DAU, đọc/ghi 200:1; ~500 TB/ngày; bandwidth ~5.8 GB/s.</p>
+        <div class="note info">
+          <span class="note-title">🔑 Pipeline xử lý video ⭐</span>
+          <p>Kích hoạt qua message queue (tách khỏi upload): <strong>File Chunker</strong> (Netflix chia theo <em>cảnh/scene</em>, không theo timestamp đều) → <strong>Content Filter</strong> (ML kiểm duyệt, lỗi đẩy DLQ) → <strong>Transcoder</strong> (FFmpeg / AWS MediaConvert) → <strong>Quality Conversion</strong> (4K/1440p/1080p/720p, lưu S3/HDFS). <strong>Streaming:</strong> CDN riêng <strong>Netflix Open Connect</strong> (đặt OCAs tại ISP, ~95% traffic qua kết nối trực tiếp) + <strong>adaptive bitrate</strong> (HLS). <strong>Resume:</strong> lưu <code>offset</code> trong bảng views. <strong>Recommendation:</strong> ML + Collaborative Filtering.</p>
+        </div>
+
+        <figure class="fig fig-md"><img src="../assets/img/netflix-datamodel.png" alt="Netflix data model" loading="lazy" /><figcaption>Data model của Netflix (users, videos, tags, views, comments)</figcaption></figure>
+        <figure class="fig"><img src="../assets/img/video-processing-pipeline.png" alt="Pipeline xử lý video" loading="lazy" /><figcaption>Pipeline xử lý video: Chunker → Filter → Transcoder → Quality Conversion</figcaption></figure>
+        <figure class="fig fig-md"><img src="../assets/img/file-chunking.png" alt="File chunking theo cảnh" loading="lazy" /><figcaption>Netflix chia file theo <b>cảnh (scene)</b> thay vì theo timestamp đều</figcaption></figure>
+        <figure class="fig"><img src="../assets/img/netflix-advanced-design.png" alt="Netflix thiết kế nâng cao" loading="lazy" /><figcaption>Thiết kế nâng cao của Netflix (Open Connect CDN, adaptive bitrate...)</figcaption></figure>
+
+        <h2>Case Study 5 — Uber</h2>
+        <p>Đặt xe. <strong>Yêu cầu:</strong> khách thấy xe gần + ETA + giá, đặt xe, theo dõi vị trí tài xế; tài xế nhận/từ chối, đánh dấu hoàn thành. <strong>Ước lượng:</strong> 100M DAU, 1M tài xế, ~10M chuyến/ngày, ~12K req/s.</p>
+        <div class="note info">
+          <span class="note-title">🔑 Khớp chuyến &amp; theo dõi vị trí ⭐</span>
+          <p><strong>Theo dõi vị trí:</strong> Push + WebSockets (full-duplex). <strong>Khớp xe gần:</strong> SQL <code>BETWEEN</code> không scale → dùng <strong>Geohashing</strong> (so sánh geohash khách &amp; tài xế) hoặc tốt nhất là <strong>Quadtrees</strong> (tìm kiếm vùng 2D hiệu quả, cache cập nhật mới nhất trong Redis). <strong>Race condition:</strong> bọc logic khớp chuyến trong Mutex, mọi thao tác transactional. <strong>High demand:</strong> Surge Pricing (giá động). <strong>Payments:</strong> bên thứ ba (Stripe/PayPal) + webhook. Partition theo <em>region/zip code</em> + consistent hashing.</p>
+        </div>
+
+        <figure class="fig fig-md"><img src="../assets/img/uber-datamodel.png" alt="Uber data model" loading="lazy" /><figcaption>Data model của Uber (customers, drivers, trips, cabs, ratings, payments)</figcaption></figure>
+        <figure class="fig"><img src="../assets/img/uber-working.png" alt="Cách Uber hoạt động" loading="lazy" /><figcaption>Luồng đặt xe: khách yêu cầu → khớp tài xế gần → theo dõi → hoàn thành</figcaption></figure>
+        <figure class="fig"><img src="../assets/img/uber-advanced-design.png" alt="Uber thiết kế nâng cao" loading="lazy" /><figcaption>Thiết kế nâng cao của Uber (WebSocket, Quadtrees, surge pricing...)</figcaption></figure>
+
+        <div class="note tip">
+          <span class="note-title">✅ Khung chung của mọi case study</span>
+          <p>Hầu hết bài lớn đều theo cùng "công thức": <strong>microservices</strong> + <strong>API Gateway</strong> + <strong>sharding/consistent hashing</strong> + <strong>cache (LRU, 20% traffic)</strong> + <strong>message broker (Kafka/SQS) cho async</strong> + <strong>object storage + CDN cho media</strong> + <strong>nhiều instance/replica để chống SPOF</strong>. Nắm khung này, bạn giải được hầu hết câu hỏi.</p>
+        </div>
+
+        <hr />
+        <h2>🎉 Chúc mừng — bạn đã hoàn thành khóa học!</h2>
+        <p>14 bài, từ networking cơ bản đến giải case study phỏng vấn. Bước tiếp theo:</p>
+        <ul>
+          <li>Tự thiết kế lại 5 case study trên giấy mà không nhìn đáp án — đây mới là cách học thật sự.</li>
+          <li>Đọc repo gốc <a href="https://github.com/karanpratapsingh/system-design" target="_blank" rel="noopener">karanpratapsingh/system-design</a> để xem các <strong>sơ đồ trực quan</strong> đi kèm từng chủ đề.</li>
+          <li>Thử thiết kế thêm các hệ thống khác: Instagram, Dropbox, Ticketmaster, hệ thống chat, payment...</li>
+        </ul>
+
+        <div class="pager">
+          <a href="13-security-infra.html"><div class="dir">← Bài trước</div><div class="ttl">Bảo mật &amp; Hạ tầng</div></a>
+          <a class="next" href="../index.html"><div class="dir">Hoàn thành →</div><div class="ttl">Về trang chủ khóa học</div></a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="../assets/script.js"></script>
+</body>
+</html>

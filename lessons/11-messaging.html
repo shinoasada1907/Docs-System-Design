@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bài 11: Messaging bất đồng bộ — Khóa học System Design</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+</head>
+<body>
+  <button class="menu-btn" id="menuBtn">☰</button>
+  <div class="overlay" id="overlay"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header"><a href="../index.html" class="brand"><span class="logo">⚙</span> System Design <span>Khóa học</span></a></div>
+      <nav class="nav">
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-basic"></span> Cơ bản</div>
+          <a href="01-gioi-thieu.html">1. Giới thiệu System Design</a>
+          <a href="02-mang-co-ban.html">2. Mạng cơ bản (IP, DNS...)</a>
+          <a href="03-load-balancing-clustering.html">3. Load Balancing &amp; Clustering</a>
+          <a href="04-caching-cdn-proxy.html">4. Caching, CDN &amp; Proxy</a>
+          <a href="05-availability-scalability-storage.html">5. Availability, Scalability &amp; Storage</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-inter"></span> Trung cấp</div>
+          <a href="06-databases.html">6. Databases: SQL vs NoSQL</a>
+          <a href="07-database-scaling.html">7. Mở rộng Database</a>
+          <a href="08-consistency.html">8. Nhất quán dữ liệu (CAP...)</a>
+          <a href="09-architecture.html">9. Kiến trúc ứng dụng</a>
+          <a href="10-communication.html">10. Giao tiếp &amp; API</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-adv"></span> Nâng cao</div>
+          <a href="11-messaging.html">11. Messaging bất đồng bộ</a>
+          <a href="12-distributed-patterns.html">12. Mẫu hệ phân tán</a>
+          <a href="13-security-infra.html">13. Bảo mật &amp; Hạ tầng</a>
+          <a href="14-interviews.html">14. Phỏng vấn &amp; Case Studies</a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="content">
+        <div class="crumb"><span class="badge badge-adv">🔴 Nâng cao</span> · Bài 11 / 14</div>
+        <h1>Messaging bất đồng bộ</h1>
+        <p class="lead">Cách các service giao tiếp gián tiếp &amp; bất đồng bộ để <strong>decouple</strong>: Message Brokers, Queues, Pub/Sub, ESB, và các pattern EDA, Event Sourcing, CQRS.</p>
+
+        <h2>Message Brokers</h2>
+        <p>Phần mềm trung gian cho phép các ứng dụng/service giao tiếp &amp; trao đổi thông tin — dịch message giữa các giao thức. Sender gửi mà <strong>không cần biết</strong> receiver ở đâu, còn sống không, hay có bao nhiêu → giúp <strong>decoupling</strong>.</p>
+        <p>Hai mô hình phân phối: <strong>Point-to-Point</strong> (one-to-one, dùng trong message queue) và <strong>Publish-Subscribe</strong> (one-to-many). <em>Ví dụ:</em> Kafka, RabbitMQ, NATS, ActiveMQ.</p>
+        <figure class="fig fig-md"><img src="../assets/img/message-broker.png" alt="Message Broker" loading="lazy" /><figcaption>Message broker làm trung gian, giúp các service decouple khỏi nhau</figcaption></figure>
+
+        <h2>Message Queues</h2>
+        <p>Giao tiếp bất đồng bộ service-to-service. Message lưu trong queue đến khi được xử lý &amp; xóa — mỗi message <strong>chỉ xử lý một lần bởi một consumer</strong>.</p>
+        <div class="diagram">Producer ──▶ [ msg | msg | msg ] ──▶ Consumer
+              (Queue lưu đến khi xử lý xong)</div>
+        <figure class="fig fig-md"><img src="../assets/img/message-queue.png" alt="Message Queue" loading="lazy" /><figcaption>Message queue — mỗi message chỉ được xử lý một lần bởi một consumer</figcaption></figure>
+        <p><strong>Ưu điểm:</strong> Scalability, Decoupling, Performance (bất đồng bộ), Reliability (persistent).</p>
+        <p><strong>Tính năng quan trọng:</strong> Push/Pull delivery, FIFO, scheduled/delay, <strong>at-least-once</strong> / <strong>exactly-once</strong> delivery, <strong>Dead-letter queue</strong> (chứa message không xử lý được), ordering best-effort, security.</p>
+        <div class="note warn">
+          <span class="note-title">⚠️ Backpressure</span>
+          <p>Nếu queue phình quá lớn vượt bộ nhớ → chậm. <strong>Backpressure</strong> giới hạn kích thước queue; khi đầy, client nhận "server busy" / <strong>HTTP 503</strong> để thử lại sau (dùng <em>exponential backoff</em>). <em>Ví dụ:</em> Amazon SQS, RabbitMQ.</p>
+        </div>
+
+        <h2>Publish-Subscribe (Pub/Sub)</h2>
+        <p>Khác queue: message publish lên một <strong>topic</strong> sẽ được <strong>đẩy (push) ngay tới TẤT CẢ subscriber</strong> của topic. Mỗi subscriber làm việc khác nhau với message, <strong>song song</strong>.</p>
+        <div class="diagram">                  ┌─▶ Subscriber A
+Publisher ─▶ Topic ─┼─▶ Subscriber B   (fanout — song song)
+                  └─▶ Subscriber C</div>
+        <figure class="fig fig-md"><img src="../assets/img/publish-subscribe.png" alt="Publish-Subscribe" loading="lazy" /><figcaption>Pub/Sub — message lên topic được đẩy tới TẤT CẢ subscriber (fanout)</figcaption></figure>
+        <p><strong>Ưu điểm:</strong> bỏ polling (push tức thì), dynamic targeting, decoupled &amp; scale độc lập, đơn giản hóa giao tiếp. <strong>Tính năng:</strong> push delivery, multiple protocols, <strong>fanout</strong>, filtering, durability, security. <em>Ví dụ:</em> Amazon SNS, Google Pub/Sub.</p>
+
+        <h2>Enterprise Service Bus (ESB)</h2>
+        <p>Mẫu kiến trúc cũ với một <strong>component tập trung</strong> lo tích hợp giữa các ứng dụng. <strong>Nhược:</strong> single point of failure, cấu hình &amp; bảo trì phức tạp, update dễ ảnh hưởng integration khác. → Message broker là giải pháp <strong>nhẹ hơn</strong>, phù hợp microservices hơn ESB.</p>
+        <figure class="fig fig-md"><img src="../assets/img/enterprise-service-bus.png" alt="Enterprise Service Bus" loading="lazy" /><figcaption>ESB — một bus tập trung tích hợp mọi ứng dụng (dễ thành điểm chết)</figcaption></figure>
+
+        <h2>Event-Driven Architecture (EDA)</h2>
+        <p>Dùng <strong>event</strong> làm phương thức giao tiếp, thường qua message broker, publish/consume bất đồng bộ. Một <strong>event</strong> là data point biểu diễn <em>thay đổi trạng thái</em> — không ra lệnh phải làm gì, chỉ thông báo "đã có gì xảy ra".</p>
+        <p>3 thành phần: <strong>Event producers</strong> → <strong>Event routers</strong> → <strong>Event consumers</strong>. <strong>Ưu:</strong> decouple producer/consumer, scale tốt, dễ thêm consumer. <strong>Thách thức:</strong> đảm bảo delivery, xử lý lỗi, exactly-once &amp; đúng thứ tự.</p>
+        <figure class="fig fig-md"><img src="../assets/img/event-driven-architecture.png" alt="Event-Driven Architecture" loading="lazy" /><figcaption>EDA — producer → router → consumer, giao tiếp bằng event</figcaption></figure>
+
+        <h2>Event Sourcing</h2>
+        <p>Thay vì chỉ lưu <em>trạng thái hiện tại</em>, dùng kho <strong>append-only</strong> ghi lại <strong>toàn bộ chuỗi hành động</strong>. Kho event là "system of record"; trạng thái được tái dựng (materialize) từ các event.</p>
+        <div class="note info">
+          <span class="note-title">ℹ️ Event Sourcing vs EDA</span>
+          <p>EDA dùng event để <strong>giao tiếp</strong> giữa các service. Event Sourcing dùng event làm <strong>cách lưu trữ state</strong> (lưu event thay vì current state). Event Sourcing là <em>một</em> pattern để triển khai EDA. <strong>Ưu:</strong> tuyệt cho audit log, fail-safety (tái dựng từ event), linh hoạt.</p>
+        </div>
+        <figure class="fig fig-md"><img src="../assets/img/event-sourcing.png" alt="Event Sourcing" loading="lazy" /><figcaption>Event Sourcing — lưu toàn bộ chuỗi event (append-only) thay vì chỉ state hiện tại</figcaption></figure>
+
+        <h2>CQRS (Command Query Responsibility Segregation)</h2>
+        <p>Tách hành động hệ thống thành <strong>Command</strong> (thay đổi state, không trả value) và <strong>Query</strong> (đọc thông tin, không side-effect). Mô tả lần đầu bởi Greg Young.</p>
+        <div class="diagram">Command (write) ──▶ Write Model ──▶ [Event Store]
+                                          │
+Query (read)   ◀── Read Model ◀── materialized view (denormalized)</div>
+        <figure class="fig fig-md"><img src="../assets/img/command-and-query-responsibility-segregation.png" alt="CQRS" loading="lazy" /><figcaption>CQRS — tách model ghi (Command) và model đọc (Query) riêng biệt</figcaption></figure>
+        <p>Thường dùng cùng Event Sourcing: event store là <strong>write model</strong> (nguồn chính thức), <strong>read model</strong> là view denormalized tối ưu cho đọc.</p>
+        <p><strong>Ưu:</strong> scale read/write độc lập, tối ưu riêng, tránh join phức tạp, ranh giới rõ. <strong>Nhược:</strong> thiết kế phức tạp hơn, xử lý eventual consistency khó, tăng effort bảo trì.</p>
+
+        <div class="note tip">
+          <span class="note-title">✅ Tóm tắt bài 11</span>
+          <p>Message broker làm trung gian decouple. Queue: 1 message → 1 consumer (chú ý backpressure, DLQ). Pub/Sub: 1 message → mọi subscriber (fanout). ESB cũ &amp; nặng → ưu tiên broker. EDA giao tiếp bằng event; Event Sourcing lưu state bằng event; CQRS tách đọc/ghi (hay đi cùng Event Sourcing).</p>
+        </div>
+
+        <div class="pager">
+          <a href="10-communication.html"><div class="dir">← Bài trước</div><div class="ttl">Giao tiếp &amp; API</div></a>
+          <a class="next" href="12-distributed-patterns.html"><div class="dir">Bài tiếp theo →</div><div class="ttl">Mẫu hệ phân tán</div></a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="../assets/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bài 12: Mẫu thiết kế hệ phân tán — Khóa học System Design</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+</head>
+<body>
+  <button class="menu-btn" id="menuBtn">☰</button>
+  <div class="overlay" id="overlay"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header"><a href="../index.html" class="brand"><span class="logo">⚙</span> System Design <span>Khóa học</span></a></div>
+      <nav class="nav">
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-basic"></span> Cơ bản</div>
+          <a href="01-gioi-thieu.html">1. Giới thiệu System Design</a>
+          <a href="02-mang-co-ban.html">2. Mạng cơ bản (IP, DNS...)</a>
+          <a href="03-load-balancing-clustering.html">3. Load Balancing &amp; Clustering</a>
+          <a href="04-caching-cdn-proxy.html">4. Caching, CDN &amp; Proxy</a>
+          <a href="05-availability-scalability-storage.html">5. Availability, Scalability &amp; Storage</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-inter"></span> Trung cấp</div>
+          <a href="06-databases.html">6. Databases: SQL vs NoSQL</a>
+          <a href="07-database-scaling.html">7. Mở rộng Database</a>
+          <a href="08-consistency.html">8. Nhất quán dữ liệu (CAP...)</a>
+          <a href="09-architecture.html">9. Kiến trúc ứng dụng</a>
+          <a href="10-communication.html">10. Giao tiếp &amp; API</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-adv"></span> Nâng cao</div>
+          <a href="11-messaging.html">11. Messaging bất đồng bộ</a>
+          <a href="12-distributed-patterns.html">12. Mẫu hệ phân tán</a>
+          <a href="13-security-infra.html">13. Bảo mật &amp; Hạ tầng</a>
+          <a href="14-interviews.html">14. Phỏng vấn &amp; Case Studies</a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="content">
+        <div class="crumb"><span class="badge badge-adv">🔴 Nâng cao</span> · Bài 12 / 14</div>
+        <h1>Mẫu thiết kế hệ phân tán</h1>
+        <p class="lead">Các pattern &amp; kỹ thuật giúp hệ phân tán ổn định và mở rộng: Geohashing/Quadtrees, Circuit Breaker, Rate Limiting, Service Discovery, SLA/SLO/SLI và Disaster Recovery.</p>
+
+        <h2>Geohashing &amp; Quadtrees</h2>
+        <p><strong>Geohashing</strong> (Gustavo Niemeyer, 2008): mã hóa tọa độ (lat, long) thành chuỗi alphanumeric ngắn (Base-32). Ví dụ San Francisco <code>37.7564, -122.4016</code> → <code>9q8yy9mf</code>.</p>
+        <ul>
+          <li>Chỉ mục không gian phân cấp — ký tự đầu xác định 1 trong 32 ô, mỗi ô lại chứa 32 ô con.</li>
+          <li>Hai điểm gần nhau khi geohash <strong>chung tiền tố dài</strong> → tìm "hàng xóm gần nhất" bằng so sánh chuỗi.</li>
+          <li>Geohash càng dài → vị trí càng chính xác (cũng có thể dùng để ẩn danh vị trí).</li>
+        </ul>
+        <figure class="fig fig-md"><img src="../assets/img/geohashing.png" alt="Geohashing" loading="lazy" /><figcaption>Geohashing — mã hóa tọa độ thành chuỗi ngắn; chung tiền tố = gần nhau</figcaption></figure>
+        <p><strong>Quadtrees</strong>: cây mà mỗi node trong có đúng 4 con, chia đệ quy không gian 2D thành 4 góc phần tư. Hiệu quả cho tìm kiếm điểm trong một vùng 2D; chỉ chia nhỏ node sau một ngưỡng. Dùng trong: bản đồ (Google Maps), location-based service (Uber). <em>Geohashing được hỗ trợ bởi MySQL, Redis, DynamoDB, Firestore.</em></p>
+        <figure class="fig fig-md"><img src="../assets/img/quadtree.png" alt="Quadtree" loading="lazy" /><figcaption>Quadtree — mỗi node trong có 4 con, chia không gian 2D thành 4 góc</figcaption></figure>
+        <figure class="fig fig-md"><img src="../assets/img/quadtree-subdivision.png" alt="Quadtree subdivision" loading="lazy" /><figcaption>Chỉ chia nhỏ một ô khi vượt ngưỡng → tiết kiệm tính toán</figcaption></figure>
+
+        <h2>Circuit Breaker</h2>
+        <p>Pattern phát hiện lỗi và <strong>ngăn lỗi tái diễn liên tục</strong> — bọc lời gọi từ xa trong một "cầu dao". Khi số lỗi vượt ngưỡng, cầu dao "ngắt" và trả lỗi ngay lập tức thay vì cố gọi (tránh <strong>cascading failure</strong>).</p>
+        <div class="diagram">CLOSED ──(lỗi vượt ngưỡng)──▶ OPEN ──(hết timeout)──▶ HALF-OPEN
+   ▲                                                      │
+   └────────────(request thử thành công)─────────────────┘
+              (nếu vẫn lỗi → quay lại OPEN)</div>
+        <figure class="fig fig-md"><img src="../assets/img/circuit-breaker.png" alt="Circuit Breaker" loading="lazy" /><figcaption>Circuit breaker với 3 trạng thái Closed / Open / Half-open</figcaption></figure>
+        <ul>
+          <li><strong>Closed</strong>: bình thường, mọi request đi qua. Lỗi vượt ngưỡng → Open.</li>
+          <li><strong>Open</strong>: trả lỗi ngay, không gọi service. Sau timeout → Half-open.</li>
+          <li><strong>Half-open</strong>: cho qua một số request thử. Thành công → Closed; vẫn lỗi → Open.</li>
+        </ul>
+
+        <h2>Rate Limiting</h2>
+        <p>Giới hạn tần suất một thao tác để bảo vệ tài nguyên — chống DoS, kiểm soát chi phí (giới hạn auto-scaling), điều tiết luồng dữ liệu cho API.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Thuật toán</th><th>Cách hoạt động</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Leaky Bucket</strong></td><td>Hàng đợi FIFO, xử lý đều đặn; queue đầy thì bỏ request ("rò rỉ").</td></tr>
+              <tr><td><strong>Token Bucket</strong></td><td>Mỗi request cần 1 token; hết token thì từ chối; bucket nạp lại theo chu kỳ.</td></tr>
+              <tr><td><strong>Fixed Window</strong></td><td>Đếm request trong cửa sổ n giây; vượt ngưỡng thì bỏ.</td></tr>
+              <tr><td><strong>Sliding Log</strong></td><td>Lưu log có timestamp cho từng request; tính tổng để quyết định.</td></tr>
+              <tr><td><strong>Sliding Window</strong></td><td>Lai fixed window + sliding log; làm mượt các đợt bùng nổ (burst).</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figure class="fig fig-md"><img src="../assets/img/rate-limiting.png" alt="Rate Limiting" loading="lazy" /><figcaption>Rate limiting — giới hạn tần suất request để bảo vệ tài nguyên</figcaption></figure>
+
+        <div class="note warn">
+          <span class="note-title">⚠️ Rate limiting trong hệ phân tán</span>
+          <p>Hai vấn đề: <strong>Inconsistency</strong> (mỗi node đếm riêng → user vượt giới hạn toàn cục bằng cách gọi nhiều node; khắc phục bằng sticky session hoặc store tập trung như Redis) và <strong>Race condition</strong> (cách "get-then-set" sai khi nhiều request đồng thời; ưu tiên cách "set-then-get" hoặc lock — nhưng lock dễ thành bottleneck).</p>
+        </div>
+
+        <h2>Service Discovery</h2>
+        <p>Phát hiện service trong mạng. Trong microservices, số instance &amp; vị trí thay đổi liên tục → client cần cơ chế tìm chúng. Hai kiểu:</p>
+        <ul>
+          <li><strong>Client-side discovery</strong>: client tự hỏi <strong>service registry</strong> để biết vị trí service.</li>
+          <li><strong>Server-side discovery</strong>: qua một thành phần trung gian (vd load balancer) chuyển tiếp tới instance khả dụng.</li>
+        </ul>
+        <figure class="fig fig-md"><img src="../assets/img/client-side-service-discovery.png" alt="Client-side service discovery" loading="lazy" /><figcaption><b>Client-side</b> — client tự hỏi service registry</figcaption></figure>
+        <figure class="fig fig-md"><img src="../assets/img/server-side-service-discovery.png" alt="Server-side service discovery" loading="lazy" /><figcaption><b>Server-side</b> — qua trung gian (load balancer) chuyển tiếp</figcaption></figure>
+        <p><strong>Service Registry</strong>: database chứa vị trí các instance (phải highly-available &amp; cập nhật). Đăng ký bằng <em>self-registration</em> (service tự đăng ký + heartbeat) hoặc <em>third-party registration</em>. <strong>Service Mesh</strong> (Istio, Envoy): quản lý giao tiếp service-to-service có quan sát &amp; bảo mật. <em>Ví dụ:</em> etcd, Consul, Zookeeper.</p>
+
+        <h2>SLA, SLO, SLI</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Thuật ngữ</th><th>Ý nghĩa</th></tr></thead>
+            <tbody>
+              <tr><td><strong>SLA</strong> (Agreement)</td><td>Cam kết giữa công ty &amp; người dùng về các chỉ số (vd availability). Thường do bộ phận business/legal viết.</td></tr>
+              <tr><td><strong>SLO</strong> (Objective)</td><td>Mục tiêu cụ thể về một chỉ số (vd uptime) phải đạt để tuân thủ SLA. Nằm trong SLA.</td></tr>
+              <tr><td><strong>SLI</strong> (Indicator)</td><td>Chỉ số <em>thực đo được</em> để xác định SLO có đạt không. SLI phải luôn ≥ SLO.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="diagram">SLA (cam kết) ⊃ SLO (mục tiêu) ←đo bằng← SLI (chỉ số thực tế)</div>
+
+        <h2>Disaster Recovery (DR)</h2>
+        <p>Quá trình khôi phục truy cập &amp; chức năng hạ tầng sau sự cố (thiên tai, tấn công mạng...). Dựa vào replicate dữ liệu &amp; xử lý ở vị trí off-premises không bị ảnh hưởng.</p>
+        <ul>
+          <li><strong>RTO</strong> (Recovery Time Objective): thời gian gián đoạn tối đa chấp nhận được.</li>
+          <li><strong>RPO</strong> (Recovery Point Objective): lượng dữ liệu mất tối đa chấp nhận được (tính từ điểm backup gần nhất).</li>
+        </ul>
+        <p><strong>Chiến lược:</strong> Back-up (đơn giản nhất) → Cold Site (hạ tầng cơ bản ở site phụ) → Hot Site (luôn giữ bản sao cập nhật — đắt nhưng giảm downtime mạnh).</p>
+        <figure class="fig fig-md"><img src="../assets/img/disaster-recovery.png" alt="Disaster Recovery" loading="lazy" /><figcaption>Disaster Recovery — RTO (thời gian) &amp; RPO (lượng dữ liệu) chấp nhận mất</figcaption></figure>
+
+        <div class="note tip">
+          <span class="note-title">✅ Tóm tắt bài 12</span>
+          <p>Geohashing/Quadtrees: tìm vị trí gần nhau hiệu quả. Circuit breaker (Closed/Open/Half-open): chặn cascading failure. Rate limiting (token/leaky bucket, sliding window): chống lạm dụng. Service discovery + registry: tìm service động. SLA⊃SLO←SLI. DR: RTO/RPO + backup/cold/hot site.</p>
+        </div>
+
+        <div class="pager">
+          <a href="11-messaging.html"><div class="dir">← Bài trước</div><div class="ttl">Messaging bất đồng bộ</div></a>
+          <a class="next" href="13-security-infra.html"><div class="dir">Bài tiếp theo →</div><div class="ttl">Bảo mật &amp; Hạ tầng</div></a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="../assets/script.js"></script>
+</body>
+</html>

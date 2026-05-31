@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bài 7: Mở rộng Database — Khóa học System Design</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+</head>
+<body>
+  <button class="menu-btn" id="menuBtn">☰</button>
+  <div class="overlay" id="overlay"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header"><a href="../index.html" class="brand"><span class="logo">⚙</span> System Design <span>Khóa học</span></a></div>
+      <nav class="nav">
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-basic"></span> Cơ bản</div>
+          <a href="01-gioi-thieu.html">1. Giới thiệu System Design</a>
+          <a href="02-mang-co-ban.html">2. Mạng cơ bản (IP, DNS...)</a>
+          <a href="03-load-balancing-clustering.html">3. Load Balancing &amp; Clustering</a>
+          <a href="04-caching-cdn-proxy.html">4. Caching, CDN &amp; Proxy</a>
+          <a href="05-availability-scalability-storage.html">5. Availability, Scalability &amp; Storage</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-inter"></span> Trung cấp</div>
+          <a href="06-databases.html">6. Databases: SQL vs NoSQL</a>
+          <a href="07-database-scaling.html">7. Mở rộng Database</a>
+          <a href="08-consistency.html">8. Nhất quán dữ liệu (CAP...)</a>
+          <a href="09-architecture.html">9. Kiến trúc ứng dụng</a>
+          <a href="10-communication.html">10. Giao tiếp &amp; API</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-adv"></span> Nâng cao</div>
+          <a href="11-messaging.html">11. Messaging bất đồng bộ</a>
+          <a href="12-distributed-patterns.html">12. Mẫu hệ phân tán</a>
+          <a href="13-security-infra.html">13. Bảo mật &amp; Hạ tầng</a>
+          <a href="14-interviews.html">14. Phỏng vấn &amp; Case Studies</a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="content">
+        <div class="crumb"><span class="badge badge-inter">🟡 Trung cấp</span> · Bài 7 / 14</div>
+        <h1>Mở rộng Database</h1>
+        <p class="lead">Các kỹ thuật giúp database "chịu tải" ở quy mô lớn: Replication, Sharding, Consistent Hashing, Indexes, Normalization/Denormalization và Federation.</p>
+
+        <h2>Replication (Nhân bản)</h2>
+        <p>Chia sẻ thông tin để đảm bảo nhất quán giữa các tài nguyên dư thừa → tăng độ tin cậy, chịu lỗi, khả năng truy cập.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Kiểu</th><th>Cách hoạt động</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Master-Slave</strong></td><td>Master nhận read+write, replicate write sang các slave (chỉ read). Master chết → chạy read-only đến khi promote slave.</td></tr>
+              <tr><td><strong>Master-Master</strong></td><td>Cả hai master đều read+write, phối hợp với nhau. Một master chết, hệ thống vẫn read+write.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figure class="fig fig-md"><img src="../assets/img/master-slave-replication.png" alt="Master-Slave Replication" loading="lazy" /><figcaption><b>Master-Slave</b> — master nhận write, replicate sang các slave (chỉ read)</figcaption></figure>
+        <figure class="fig fig-md"><img src="../assets/img/master-master-replication.png" alt="Master-Master Replication" loading="lazy" /><figcaption><b>Master-Master</b> — cả hai master đều read+write &amp; đồng bộ với nhau</figcaption></figure>
+
+        <p><strong>Sync vs Async:</strong> Synchronous ghi vào primary &amp; replica <em>đồng thời</em> (luôn đồng bộ). Asynchronous copy sang replica <em>sau khi</em> ghi primary (rẻ hơn, có thể trễ). Càng nhiều read slave → <strong>replication lag</strong> càng tăng.</p>
+
+        <h2>Sharding (Phân mảnh ngang)</h2>
+        <p>Là <strong>horizontal partitioning</strong> — tách các <em>hàng</em> của một bảng thành nhiều bảng nhỏ gọi là <strong>shard</strong>; mỗi shard cùng schema nhưng giữ tập con dữ liệu độc lập.</p>
+        <figure class="fig fig-md"><img src="../assets/img/sharding.png" alt="Sharding" loading="lazy" /><figcaption>Sharding — tách các hàng của một bảng ra nhiều shard độc lập</figcaption></figure>
+        <p><strong>Tiêu chí phân mảnh:</strong></p>
+        <ul>
+          <li><strong>Hash-Based</strong>: dùng hàm băm (nhược: thêm/bớt server tốn kém).</li>
+          <li><strong>List-Based</strong>: theo danh sách giá trị của một cột.</li>
+          <li><strong>Range-Based</strong>: theo khoảng giá trị (liền kề, không chồng).</li>
+          <li><strong>Composite</strong>: kết hợp nhiều kỹ thuật.</li>
+        </ul>
+        <p><strong>Ưu:</strong> availability, scalability, security, query performance, data manageability. <strong>Nhược:</strong> phức tạp, <em>join giữa các shard</em> rất khó &amp; chậm, phải <strong>rebalancing</strong> khi phân bố lệch.</p>
+
+        <h2>Consistent Hashing ⭐</h2>
+        <p><strong>Vấn đề với hashing thường</strong> (<code>hash(key) mod N</code>): khi thêm/bớt node, <code>N</code> đổi → <strong>đa số</strong> request bị ánh xạ lại (rất tốn kém).</p>
+        <figure class="fig fig-md"><img src="../assets/img/simple-hashing.png" alt="Hashing thường" loading="lazy" /><figcaption>Hashing thường (<code>hash mod N</code>) — thêm/bớt node làm xáo trộn gần như toàn bộ</figcaption></figure>
+        <p><strong>Consistent hashing</strong> giải quyết: đặt cả node và request lên một <strong>vòng tròn băm (hash ring)</strong>; request đi tới node gần nhất theo chiều kim đồng hồ. Khi thêm/bớt node, chỉ một <strong>phần nhỏ</strong> (<code>K/N</code>) request phải định tuyến lại.</p>
+        <div class="diagram">       Node A
+      /      \
+   req3       Node B
+    |           |
+   Node D     req1
+      \       /
+       Node C ── req2     (request → node gần nhất theo chiều kim đồng hồ)</div>
+        <figure class="fig fig-md"><img src="../assets/img/consistent-hashing.png" alt="Consistent Hashing" loading="lazy" /><figcaption>Consistent hashing — node &amp; request đặt trên vòng tròn băm; thêm/bớt node chỉ ảnh hưởng phần nhỏ</figcaption></figure>
+        <div class="note info">
+          <span class="note-title">ℹ️ Virtual Nodes (VNodes)</span>
+          <p>Phân bố trên ring thực tế thường lệch → có <strong>hotspot</strong>. Giải pháp: mỗi node vật lý được map <em>nhiều lần</em> lên ring dưới dạng VNode → tải đều hơn, rebalance nhanh hơn, giảm hotspot. <em>Dùng trong:</em> Cassandra, DynamoDB.</p>
+        </div>
+        <figure class="fig fig-md"><img src="../assets/img/virtual-nodes.png" alt="Virtual Nodes" loading="lazy" /><figcaption>Virtual Nodes — mỗi node vật lý map nhiều lần lên ring để tải đều hơn, giảm hotspot</figcaption></figure>
+
+        <h2>Indexes</h2>
+        <p>Index tăng tốc <strong>đọc</strong> bằng cách như "mục lục" trỏ tới vị trí dữ liệu — đánh đổi: tốn thêm bộ nhớ &amp; <strong>ghi chậm hơn</strong> (phải cập nhật index).</p>
+        <figure class="fig fig-md"><img src="../assets/img/indexes.png" alt="Index như mục lục" loading="lazy" /><figcaption>Index hoạt động như "mục lục" trỏ tới vị trí dữ liệu thật</figcaption></figure>
+        <ul>
+          <li><strong>Dense index</strong>: một bản ghi index cho <em>mọi</em> hàng → tìm nhanh (binary search) nhưng tốn bộ nhớ &amp; bảo trì.</li>
+          <li><strong>Sparse index</strong>: chỉ cho <em>một số</em> hàng → ít bộ nhớ, ghi nhanh hơn, nhưng tìm chậm hơn.</li>
+        </ul>
+        <figure class="fig fig-md"><img src="../assets/img/dense-index.png" alt="Dense index" loading="lazy" /><figcaption><b>Dense index</b> — một bản ghi index cho mọi hàng</figcaption></figure>
+        <figure class="fig fig-md"><img src="../assets/img/sparse-index.png" alt="Sparse index" loading="lazy" /><figcaption><b>Sparse index</b> — chỉ index một số hàng</figcaption></figure>
+
+        <h2>Normalization &amp; Denormalization</h2>
+        <p><strong>Normalization</strong>: tổ chức dữ liệu để loại bỏ <strong>dư thừa</strong> &amp; phụ thuộc bất nhất, chống các <em>anomaly</em> (insertion/update/deletion).</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Dạng chuẩn</th><th>Quy tắc</th></tr></thead>
+            <tbody>
+              <tr><td><strong>1NF</strong></td><td>Không nhóm lặp; có primary key; không trộn kiểu dữ liệu trong một cột.</td></tr>
+              <tr><td><strong>2NF</strong></td><td>Đạt 1NF + không có partial dependency.</td></tr>
+              <tr><td><strong>3NF</strong></td><td>Đạt 2NF + không có transitive dependency.</td></tr>
+              <tr><td><strong>BCNF</strong> (3.5NF)</td><td>Mạnh hơn 3NF; với mọi phụ thuộc X→Y, X phải là super key.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>Denormalization</strong>: <em>thêm</em> dữ liệu dư thừa để tránh join tốn kém → tăng tốc <strong>đọc</strong>, đánh đổi tốc độ <strong>ghi</strong>. Đặc biệt hữu ích khi dữ liệu đã phân tán (sharding/federation) khiến join qua mạng phức tạp.</p>
+        <div class="note warn">
+          <span class="note-title">⚠️ Đánh đổi normalize vs denormalize</span>
+          <p>Normalize: ít dư thừa, nhất quán cao, nhưng <em>nhiều join → chậm</em>. Denormalize: đọc nhanh, ít join, nhưng <em>dư thừa &amp; dễ bất nhất</em>, ghi đắt. Hệ thống đọc-nhiều thường nghiêng về denormalize.</p>
+        </div>
+
+        <h2>Federation</h2>
+        <p><strong>Federation</strong> (functional partitioning): tách database <strong>theo chức năng</strong>, làm nhiều DB vật lý trông như một DB logic. Đặc trưng: transparency, heterogeneity, extensibility, autonomy, data integration. <strong>Nhược:</strong> thêm phần cứng &amp; phức tạp, join giữa các DB khó, phụ thuộc nguồn dữ liệu tự trị.</p>
+        <figure class="fig fig-md"><img src="../assets/img/database-federation.png" alt="Database Federation" loading="lazy" /><figcaption>Federation — nhiều DB vật lý theo chức năng, trông như một DB logic</figcaption></figure>
+
+        <div class="note tip">
+          <span class="note-title">✅ Tóm tắt bài 7</span>
+          <p>Replication (master-slave/master-master, sync/async) tăng tin cậy. Sharding chia hàng thành shard (chú ý join &amp; rebalance). Consistent hashing + VNodes giảm xáo trộn khi thêm/bớt node. Index tăng đọc/chậm ghi. Normalize giảm dư thừa, denormalize tăng đọc. Federation tách DB theo chức năng.</p>
+        </div>
+
+        <div class="pager">
+          <a href="06-databases.html"><div class="dir">← Bài trước</div><div class="ttl">Databases: SQL vs NoSQL</div></a>
+          <a class="next" href="08-consistency.html"><div class="dir">Bài tiếp theo →</div><div class="ttl">Nhất quán dữ liệu (CAP...)</div></a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="../assets/script.js"></script>
+</body>
+</html>

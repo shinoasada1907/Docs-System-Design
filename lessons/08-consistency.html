@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bài 8: Nhất quán dữ liệu (CAP, ACID/BASE) — Khóa học System Design</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+</head>
+<body>
+  <button class="menu-btn" id="menuBtn">☰</button>
+  <div class="overlay" id="overlay"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header"><a href="../index.html" class="brand"><span class="logo">⚙</span> System Design <span>Khóa học</span></a></div>
+      <nav class="nav">
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-basic"></span> Cơ bản</div>
+          <a href="01-gioi-thieu.html">1. Giới thiệu System Design</a>
+          <a href="02-mang-co-ban.html">2. Mạng cơ bản (IP, DNS...)</a>
+          <a href="03-load-balancing-clustering.html">3. Load Balancing &amp; Clustering</a>
+          <a href="04-caching-cdn-proxy.html">4. Caching, CDN &amp; Proxy</a>
+          <a href="05-availability-scalability-storage.html">5. Availability, Scalability &amp; Storage</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-inter"></span> Trung cấp</div>
+          <a href="06-databases.html">6. Databases: SQL vs NoSQL</a>
+          <a href="07-database-scaling.html">7. Mở rộng Database</a>
+          <a href="08-consistency.html">8. Nhất quán dữ liệu (CAP...)</a>
+          <a href="09-architecture.html">9. Kiến trúc ứng dụng</a>
+          <a href="10-communication.html">10. Giao tiếp &amp; API</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-adv"></span> Nâng cao</div>
+          <a href="11-messaging.html">11. Messaging bất đồng bộ</a>
+          <a href="12-distributed-patterns.html">12. Mẫu hệ phân tán</a>
+          <a href="13-security-infra.html">13. Bảo mật &amp; Hạ tầng</a>
+          <a href="14-interviews.html">14. Phỏng vấn &amp; Case Studies</a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="content">
+        <div class="crumb"><span class="badge badge-inter">🟡 Trung cấp</span> · Bài 8 / 14</div>
+        <h1>Nhất quán dữ liệu: ACID/BASE, CAP, Transactions</h1>
+        <p class="lead">Những đánh đổi cốt lõi khi giữ dữ liệu nhất quán trong hệ phân tán — chủ đề "kinh điển" của mọi buổi phỏng vấn system design.</p>
+
+        <h2>ACID vs BASE</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ACID (thường ở SQL)</th><th>BASE (thường ở NoSQL)</th></tr></thead>
+            <tbody>
+              <tr><td><strong>A</strong>tomic — tất cả thành công hoặc rollback hết.</td><td><strong>B</strong>asic Availability — phần lớn thời gian hoạt động.</td></tr>
+              <tr><td><strong>C</strong>onsistent — DB luôn hợp lệ sau transaction.</td><td><strong>S</strong>oft-state — trạng thái có thể chưa nhất quán.</td></tr>
+              <tr><td><strong>I</strong>solated — các transaction không tranh chấp.</td><td><strong>E</strong>ventual consistency — cuối cùng sẽ nhất quán.</td></tr>
+              <tr><td><strong>D</strong>urable — đã commit thì tồn tại kể cả khi sự cố.</td><td>(read vẫn được dù có thể trả dữ liệu cũ)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note info">
+          <span class="note-title">ℹ️ Đánh đổi</span>
+          <p>ACID = nhất quán mạnh, đơn giản cho lập trình viên (hợp khi dữ liệu phải tin cậy tuyệt đối, vd ngân hàng). BASE = nhất quán cuối cùng, đổi lấy scale &amp; resilience (nhưng dev phải cẩn thận hơn). Không có đáp án đúng tuyệt đối — chọn theo yêu cầu.</p>
+        </div>
+
+        <h2>Định lý CAP ⭐</h2>
+        <p>Một hệ phân tán chỉ đạt được <strong>2 trong 3</strong>: <strong>C</strong>onsistency, <strong>A</strong>vailability, <strong>P</strong>artition tolerance.</p>
+        <ul>
+          <li><strong>Consistency</strong>: mọi client thấy cùng dữ liệu tại cùng thời điểm, bất kể nối tới node nào.</li>
+          <li><strong>Availability</strong>: mọi request đều nhận phản hồi, kể cả khi vài node chết.</li>
+          <li><strong>Partition tolerance</strong>: hệ thống vẫn chạy dù mạng bị chia cắt / mất gói.</li>
+        </ul>
+        <div class="note warn">
+          <span class="note-title">⚠️ Thực tế: phải chọn P</span>
+          <p>Mạng không bao giờ đáng tin tuyệt đối → hệ phân tán <strong>buộc phải</strong> chọn Partition tolerance (P). Điều này biến CAP thành đánh đổi giữa <strong>C và A</strong>.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Loại</th><th>Đạt</th><th>Khi có partition</th><th>Ví dụ</th></tr></thead>
+            <tbody>
+              <tr><td><strong>CA</strong></td><td>Consistency + Availability</td><td>Không hoạt động được nếu có partition</td><td>PostgreSQL, MariaDB</td></tr>
+              <tr><td><strong>CP</strong></td><td>Consistency + Partition tol.</td><td>Tắt node không nhất quán đến khi sửa xong</td><td>MongoDB, HBase</td></tr>
+              <tr><td><strong>AP</strong></td><td>Availability + Partition tol.</td><td>Vẫn phục vụ (có thể trả dữ liệu cũ), sync lại sau</td><td>Cassandra, CouchDB</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <figure class="fig fig-md"><img src="../assets/img/cap-theorem.png" alt="Định lý CAP" loading="lazy" /><figcaption>Định lý CAP — chỉ đạt được 2 trong 3: Consistency, Availability, Partition tolerance</figcaption></figure>
+
+        <h2>Định lý PACELC</h2>
+        <p>Mở rộng của CAP (do Daniel J. Abadi): <strong>nếu Partition (P) → chọn A hoặc C; Else (E, lúc bình thường) → chọn Latency (L) hoặc Consistency (C)</strong>.</p>
+        <div class="diagram">P → A hoặc C
+E → L hoặc C</div>
+        <p>PACELC bổ sung điều CAP thiếu: <strong>độ trễ (latency)</strong>. Vì theo CAP, một DB trả lời sau 30 ngày vẫn tính là "available" — vô lý với thực tế.</p>
+        <figure class="fig fig-md"><img src="../assets/img/pacelc-theorem.png" alt="Định lý PACELC" loading="lazy" /><figcaption>PACELC — nếu Partition thì A/C; ngược lại (Else) thì Latency/Consistency</figcaption></figure>
+
+        <h2>Transactions</h2>
+        <p>Một transaction là chuỗi thao tác coi như <strong>một đơn vị công việc</strong> — tất cả thành công hoặc thất bại. Các trạng thái:</p>
+        <div class="diagram">Active → Partially Committed → Committed → Terminated
+   ↓
+ Failed → Aborted (rollback) → (restart hoặc kill)</div>
+        <figure class="fig fig-md"><img src="../assets/img/transaction-states.png" alt="Các trạng thái của transaction" loading="lazy" /><figcaption>Vòng đời các trạng thái của một transaction</figcaption></figure>
+
+        <h2>Distributed Transactions</h2>
+        <p>Thao tác trên <strong>≥2 database</strong>, cần phối hợp commit/rollback như một đơn vị: <strong>tất cả commit, hoặc tất cả abort</strong>.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Kỹ thuật</th><th>Cách hoạt động</th></tr></thead>
+            <tbody>
+              <tr><td><strong>2PC (Two-Phase Commit)</strong></td><td>Coordinator điều phối: (1) <em>Prepare</em> — thu thập đồng thuận; (2) <em>Commit</em> — nếu mọi node "prepared" thì commit, ngược lại rollback. Nhược: là <strong>blocking</strong>, coordinator chết thì kẹt.</td></tr>
+              <tr><td><strong>3PC (Three-Phase Commit)</strong></td><td>Thêm pha <em>Pre-commit</em> giữa Prepare &amp; Commit → mỗi pha có thể timeout, giảm vấn đề blocking của 2PC.</td></tr>
+              <tr><td><strong>Saga</strong></td><td>Chuỗi <em>local transaction</em>; mỗi cái phát event kích hoạt cái tiếp theo. Nếu lỗi → chạy <strong>compensating transaction</strong> để hoàn tác. Phối hợp qua <em>Choreography</em> (event) hoặc <em>Orchestration</em> (điều phối viên).</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figure class="fig fig-md"><img src="../assets/img/two-phase-commit.png" alt="Two-Phase Commit" loading="lazy" /><figcaption><b>2PC</b> — Prepare → Commit, có coordinator điều phối</figcaption></figure>
+        <figure class="fig fig-md"><img src="../assets/img/three-phase-commit.png" alt="Three-Phase Commit" loading="lazy" /><figcaption><b>3PC</b> — thêm pha Pre-commit để giảm blocking</figcaption></figure>
+        <figure class="fig fig-md"><img src="../assets/img/sagas.png" alt="Saga pattern" loading="lazy" /><figcaption><b>Saga</b> — chuỗi local transaction + compensating transaction khi lỗi</figcaption></figure>
+
+        <div class="note danger">
+          <span class="note-title">🚨 Saga khó ở đâu?</span>
+          <p>Khó debug, dễ phụ thuộc vòng (cyclic), thiếu cô lập dữ liệu (durability challenges), khó test (phải chạy tất cả service). Nhưng Saga là lựa chọn phổ biến cho transaction qua nhiều microservice (xem Bài 9 &amp; 11).</p>
+        </div>
+
+        <div class="note tip">
+          <span class="note-title">✅ Tóm tắt bài 8</span>
+          <p>ACID (nhất quán mạnh, SQL) vs BASE (nhất quán cuối, NoSQL). CAP: chọn 2/3, thực tế phải có P → đánh đổi C vs A (CP vs AP). PACELC thêm yếu tố latency. Distributed transaction: 2PC (blocking), 3PC (thêm pre-commit), Saga (local tx + compensating).</p>
+        </div>
+
+        <div class="pager">
+          <a href="07-database-scaling.html"><div class="dir">← Bài trước</div><div class="ttl">Mở rộng Database</div></a>
+          <a class="next" href="09-architecture.html"><div class="dir">Bài tiếp theo →</div><div class="ttl">Kiến trúc ứng dụng</div></a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="../assets/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bài 3: Load Balancing &amp; Clustering — Khóa học System Design</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+</head>
+<body>
+  <button class="menu-btn" id="menuBtn">☰</button>
+  <div class="overlay" id="overlay"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header"><a href="../index.html" class="brand"><span class="logo">⚙</span> System Design <span>Khóa học</span></a></div>
+      <nav class="nav">
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-basic"></span> Cơ bản</div>
+          <a href="01-gioi-thieu.html">1. Giới thiệu System Design</a>
+          <a href="02-mang-co-ban.html">2. Mạng cơ bản (IP, DNS...)</a>
+          <a href="03-load-balancing-clustering.html">3. Load Balancing &amp; Clustering</a>
+          <a href="04-caching-cdn-proxy.html">4. Caching, CDN &amp; Proxy</a>
+          <a href="05-availability-scalability-storage.html">5. Availability, Scalability &amp; Storage</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-inter"></span> Trung cấp</div>
+          <a href="06-databases.html">6. Databases: SQL vs NoSQL</a>
+          <a href="07-database-scaling.html">7. Mở rộng Database</a>
+          <a href="08-consistency.html">8. Nhất quán dữ liệu (CAP...)</a>
+          <a href="09-architecture.html">9. Kiến trúc ứng dụng</a>
+          <a href="10-communication.html">10. Giao tiếp &amp; API</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-adv"></span> Nâng cao</div>
+          <a href="11-messaging.html">11. Messaging bất đồng bộ</a>
+          <a href="12-distributed-patterns.html">12. Mẫu hệ phân tán</a>
+          <a href="13-security-infra.html">13. Bảo mật &amp; Hạ tầng</a>
+          <a href="14-interviews.html">14. Phỏng vấn &amp; Case Studies</a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="content">
+        <div class="crumb"><span class="badge badge-basic">🟢 Cơ bản</span> · Bài 3 / 14</div>
+        <h1>Load Balancing &amp; Clustering</h1>
+        <p class="lead">Cách phân phối tải qua nhiều máy chủ để đạt tính sẵn sàng cao và mở rộng được, và cách nhóm các máy thành một cụm (cluster) hoạt động như một thể thống nhất.</p>
+
+        <h2>Load Balancing</h2>
+        <p><strong>Load balancer</strong> phân phối lưu lượng đến nhiều tài nguyên (server), chỉ gửi request tới những server đang "khỏe". Nếu một server chết, traffic được chuyển sang server khác; thêm server mới thì LB tự động bắt đầu gửi request tới.</p>
+        <figure class="fig"><img src="../assets/img/load-balancer.png" alt="Load balancer phân phối request" loading="lazy" /><figcaption>Load balancer đứng trước nhóm server, phân phối request đến các server đang khỏe</figcaption></figure>
+
+        <h3>Phân phối tải theo cách nào</h3>
+        <ul>
+          <li><strong>Host-based</strong>: theo hostname được yêu cầu.</li>
+          <li><strong>Path-based</strong>: theo toàn bộ URL.</li>
+          <li><strong>Content-based</strong>: kiểm tra nội dung request (vd giá trị tham số).</li>
+        </ul>
+
+        <h3>Theo tầng (layer)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Tầng</th><th>Đặc điểm</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Layer 4 (Network)</strong></td><td>Định tuyến theo IP; không làm content-based; thường là phần cứng tốc độ cao.</td></tr>
+              <tr><td><strong>Layer 7 (Application)</strong></td><td>Đọc trọn request; định tuyến theo nội dung; "hiểu" traffic đầy đủ.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <figure class="fig fig-md"><img src="../assets/img/load-balancer-layers.png" alt="Load balancing layer 4 vs layer 7" loading="lazy" /><figcaption>Load balancing ở tầng mạng (L4) và tầng ứng dụng (L7)</figcaption></figure>
+
+        <h3>Thuật toán định tuyến</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Thuật toán</th><th>Cách hoạt động</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Round-robin</strong></td><td>Phân request lần lượt theo vòng.</td></tr>
+              <tr><td><strong>Weighted Round-robin</strong></td><td>Round-robin có trọng số theo năng lực server.</td></tr>
+              <tr><td><strong>Least Connections</strong></td><td>Gửi tới server có ít kết nối nhất.</td></tr>
+              <tr><td><strong>Least Response Time</strong></td><td>Kết hợp thời gian phản hồi nhanh nhất + ít kết nối nhất.</td></tr>
+              <tr><td><strong>Least Bandwidth</strong></td><td>Gửi tới server có lưu lượng (Mbps) thấp nhất.</td></tr>
+              <tr><td><strong>Hashing</strong></td><td>Phân theo một khóa (IP client, URL...).</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Tính năng &amp; lưu ý</h3>
+        <p><strong>Tính năng thường gặp:</strong> autoscaling, sticky sessions (gắn user với một server để giữ session), healthchecks, persistent connection (WebSocket), SSL/TLS, caching, logging, request tracing, redirects, rate limiting.</p>
+        <div class="note warn">
+          <span class="note-title">⚠️ LB cũng có thể là điểm chết duy nhất (SPOF)</span>
+          <p>Bản thân load balancer có thể là single point of failure. Khắc phục: chạy nhiều LB ở chế độ cluster (active + passive). Khi LB active chết, LB passive tiếp quản → hệ thống chịu lỗi tốt hơn.</p>
+        </div>
+        <figure class="fig fig-md"><img src="../assets/img/redundant-load-balancer.png" alt="Load balancer dự phòng" loading="lazy" /><figcaption>Cụm load balancer dự phòng (active + passive) để tránh điểm chết duy nhất</figcaption></figure>
+        <p><strong>Ưu điểm:</strong> Scalability, Redundancy, Flexibility, Efficiency. <em>Ví dụ:</em> AWS ELB, Nginx, HAProxy, GCP/Azure Load Balancing.</p>
+
+        <h2>Clustering</h2>
+        <p>Một <strong>cluster</strong> là nhóm ≥2 máy tính (<strong>node</strong>) chạy song song để đạt mục tiêu chung — tận dụng tổng bộ nhớ và sức xử lý để tăng hiệu năng tổng thể. Thường có một <strong>leader node</strong> làm điểm vào, phân chia công việc và tổng hợp kết quả. Lý tưởng là người dùng không nhận ra đó là cluster hay một máy đơn.</p>
+        <figure class="fig"><img src="../assets/img/cluster.png" alt="Cấu trúc cluster" loading="lazy" /><figcaption>Một cluster gồm nhiều node phối hợp; leader node làm điểm vào và phân chia công việc</figcaption></figure>
+
+        <h3>Cấu hình High-Availability</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Cấu hình</th><th>Mô tả</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Active-Active</strong></td><td>≥2 node cùng chạy dịch vụ đồng thời; mục đích chính là load balancing → tăng throughput &amp; thời gian phản hồi.</td></tr>
+              <tr><td><strong>Active-Passive</strong></td><td>≥2 node nhưng không phải tất cả đều active; node passive ở chế độ chờ (standby).</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <figure class="fig fig-md"><img src="../assets/img/active-active.png" alt="Cấu hình Active-Active" loading="lazy" /><figcaption><b>Active-Active</b> — mọi node cùng chạy &amp; cân tải</figcaption></figure>
+        <figure class="fig fig-md"><img src="../assets/img/active-passive.png" alt="Cấu hình Active-Passive" loading="lazy" /><figcaption><b>Active-Passive</b> — node passive ở chế độ chờ, tiếp quản khi node active chết</figcaption></figure>
+
+        <h2>Load Balancing vs Clustering ⭐</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Clustering</th><th>Load Balancing</th></tr></thead>
+            <tbody>
+              <tr><td>Cung cấp redundancy, tăng capacity &amp; availability.</td><td>Phân phối request qua các server.</td></tr>
+              <tr><td>Các server <strong>biết về nhau</strong> và phối hợp vì mục tiêu chung.</td><td>Các server <strong>không biết về nhau</strong>; chỉ phản hồi request từ LB.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note info">
+          <span class="note-title">ℹ️ Có thể dùng chung</span>
+          <p>Hai khái niệm này không loại trừ nhau — thường được dùng <strong>cùng nhau</strong>. <em>Ví dụ cluster:</em> Kubernetes/Amazon ECS (containers), Cassandra/MongoDB (databases), Redis (cache).</p>
+        </div>
+        <p><strong>Thách thức của clustering:</strong> tăng độ phức tạp cài đặt/bảo trì (mỗi node phải cập nhật OS + app + dependency), khó hơn nếu node không đồng nhất, phải giám sát tài nguyên &amp; gom log, quản lý storage chia sẻ phức tạp.</p>
+
+        <div class="note tip">
+          <span class="note-title">✅ Tóm tắt bài 3</span>
+          <p>Load balancer phân phối traffic (L4 theo IP, L7 theo nội dung) bằng round-robin, least connections... — nhớ chạy LB dự phòng để tránh SPOF. Cluster gồm các node biết nhau, phối hợp (active-active để cân tải, active-passive để dự phòng). LB ≠ cluster nhưng thường đi đôi.</p>
+        </div>
+
+        <div class="pager">
+          <a href="02-mang-co-ban.html"><div class="dir">← Bài trước</div><div class="ttl">Mạng cơ bản</div></a>
+          <a class="next" href="04-caching-cdn-proxy.html"><div class="dir">Bài tiếp theo →</div><div class="ttl">Caching, CDN &amp; Proxy</div></a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="../assets/script.js"></script>
+</body>
+</html>

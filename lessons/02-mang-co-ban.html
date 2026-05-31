@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bài 2: Mạng cơ bản — Khóa học System Design</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+</head>
+<body>
+  <button class="menu-btn" id="menuBtn">☰</button>
+  <div class="overlay" id="overlay"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header"><a href="../index.html" class="brand"><span class="logo">⚙</span> System Design <span>Khóa học</span></a></div>
+      <nav class="nav">
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-basic"></span> Cơ bản</div>
+          <a href="01-gioi-thieu.html">1. Giới thiệu System Design</a>
+          <a href="02-mang-co-ban.html">2. Mạng cơ bản (IP, DNS...)</a>
+          <a href="03-load-balancing-clustering.html">3. Load Balancing &amp; Clustering</a>
+          <a href="04-caching-cdn-proxy.html">4. Caching, CDN &amp; Proxy</a>
+          <a href="05-availability-scalability-storage.html">5. Availability, Scalability &amp; Storage</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-inter"></span> Trung cấp</div>
+          <a href="06-databases.html">6. Databases: SQL vs NoSQL</a>
+          <a href="07-database-scaling.html">7. Mở rộng Database</a>
+          <a href="08-consistency.html">8. Nhất quán dữ liệu (CAP...)</a>
+          <a href="09-architecture.html">9. Kiến trúc ứng dụng</a>
+          <a href="10-communication.html">10. Giao tiếp &amp; API</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><span class="lvl lvl-adv"></span> Nâng cao</div>
+          <a href="11-messaging.html">11. Messaging bất đồng bộ</a>
+          <a href="12-distributed-patterns.html">12. Mẫu hệ phân tán</a>
+          <a href="13-security-infra.html">13. Bảo mật &amp; Hạ tầng</a>
+          <a href="14-interviews.html">14. Phỏng vấn &amp; Case Studies</a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="content">
+        <div class="crumb"><span class="badge badge-basic">🟢 Cơ bản</span> · Bài 2 / 14</div>
+        <h1>Mạng cơ bản: IP, OSI, TCP/UDP, DNS</h1>
+        <p class="lead">Nền tảng networking mà mọi kỹ sư system design cần nắm: địa chỉ IP, mô hình 7 lớp OSI, hai giao thức TCP/UDP, và cách DNS phân giải tên miền.</p>
+
+        <h2>IP (Internet Protocol)</h2>
+        <p>Địa chỉ IP là <strong>định danh duy nhất</strong> của một thiết bị trên internet hoặc mạng cục bộ. IP = "Internet Protocol" — bộ quy tắc quy định định dạng dữ liệu gửi qua mạng.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Phiên bản</th><th>Bits</th><th>Không gian địa chỉ</th><th>Ví dụ</th></tr></thead>
+            <tbody>
+              <tr><td><strong>IPv4</strong></td><td>32-bit</td><td>~4 tỉ địa chỉ</td><td><code>102.22.192.181</code></td></tr>
+              <tr><td><strong>IPv6</strong></td><td>128-bit</td><td>~340 undecillion (rất lớn)</td><td><code>2001:0db8:85a3:...:7334</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>Phân loại:</strong> <em>Public</em> (ISP cấp cho router, cả mạng chia sẻ) · <em>Private</em> (router gán cho từng thiết bị trong nhà) · <em>Static</em> (cố định, đắt, ổn định — dùng host server) · <em>Dynamic</em> (đổi theo thời gian, do DHCP cấp — phổ biến, rẻ).</p>
+
+        <h2>Mô hình OSI</h2>
+        <p>OSI (Open System Interconnection) là mô hình khái niệm chia quá trình truyền thông mạng thành <strong>7 lớp trừu tượng</strong>, chồng lên nhau. Nó là "ngôn ngữ chung" của networking — giúp troubleshoot, nhận diện mối đe dọa ở từng lớp, và để các nhà sản xuất tạo thiết bị tương thích.</p>
+        <figure class="fig"><img src="../assets/img/osi-model.png" alt="Mô hình OSI 7 lớp" loading="lazy" /><figcaption>7 lớp của mô hình OSI, từ Application (trên cùng) xuống Physical (dưới cùng)</figcaption></figure>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Lớp</th><th>Vai trò</th></tr></thead>
+            <tbody>
+              <tr><td>7</td><td><strong>Application</strong></td><td>Lớp duy nhất tương tác trực tiếp với dữ liệu người dùng (HTTP, SMTP).</td></tr>
+              <tr><td>6</td><td><strong>Presentation</strong></td><td>Dịch/định dạng, mã hóa-giải mã, nén dữ liệu.</td></tr>
+              <tr><td>5</td><td><strong>Session</strong></td><td>Mở/đóng phiên giao tiếp, đồng bộ bằng checkpoint.</td></tr>
+              <tr><td>4</td><td><strong>Transport</strong></td><td>Giao tiếp đầu-cuối; chia dữ liệu thành <em>segments</em>.</td></tr>
+              <tr><td>3</td><td><strong>Network</strong></td><td>Truyền giữa 2 mạng khác nhau; chia thành <em>packets</em>; định tuyến (routing).</td></tr>
+              <tr><td>2</td><td><strong>Data Link</strong></td><td>Truyền giữa 2 thiết bị cùng mạng; chia thành <em>frames</em>.</td></tr>
+              <tr><td>1</td><td><strong>Physical</strong></td><td>Thiết bị vật lý (cáp, switch); dữ liệu thành <em>bit stream</em> (1 và 0).</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note tip">
+          <span class="note-title">💡 Mẹo nhớ đơn vị dữ liệu</span>
+          <p>Segments (L4) → Packets (L3) → Frames (L2) → Bits (L1). Càng xuống thấp, dữ liệu càng được "đóng gói" thành đơn vị nhỏ hơn.</p>
+        </div>
+
+        <h2>TCP và UDP</h2>
+        <p>Cả hai đều ở lớp Transport (L4) nhưng đánh đổi khác nhau:</p>
+        <figure class="fig fig-md"><img src="../assets/img/tcp.png" alt="TCP — kết nối có handshake" loading="lazy" /><figcaption><b>TCP</b> — thiết lập kết nối (handshake), đảm bảo giao đúng thứ tự</figcaption></figure>
+        <figure class="fig fig-md"><img src="../assets/img/udp.png" alt="UDP — không kết nối" loading="lazy" /><figcaption><b>UDP</b> — gửi liên tục không cần thiết lập kết nối, không đảm bảo giao</figcaption></figure>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Đặc điểm</th><th>TCP</th><th>UDP</th></tr></thead>
+            <tbody>
+              <tr><td>Kết nối</td><td>Connection-oriented (cần thiết lập kết nối)</td><td>Connectionless</td></tr>
+              <tr><td>Đảm bảo giao</td><td>✅ Có (đúng thứ tự, kiểm lỗi)</td><td>❌ Không</td></tr>
+              <tr><td>Truyền lại gói mất</td><td>✅ Có</td><td>❌ Không</td></tr>
+              <tr><td>Tốc độ</td><td>Chậm hơn</td><td>Nhanh hơn</td></tr>
+              <tr><td>Broadcast</td><td>Không hỗ trợ</td><td>Hỗ trợ</td></tr>
+              <tr><td>Use cases</td><td>HTTPS, HTTP, SMTP, FTP...</td><td>Video streaming, DNS, VoIP...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note info">
+          <span class="note-title">ℹ️ Khi nào chọn UDP?</span>
+          <p>Khi cần <strong>độ trễ thấp nhất</strong> và "dữ liệu đến muộn còn tệ hơn mất dữ liệu" (vd gọi video, game real-time). TCP cho độ tin cậy nhưng cơ chế phản hồi tạo overhead → tốn băng thông hơn.</p>
+        </div>
+
+        <h2>DNS (Domain Name System)</h2>
+        <p>Con người thích tên (<code>google.com</code>) hơn số (<code>122.250.192.232</code>). DNS là hệ thống <strong>phân cấp &amp; phi tập trung</strong> dịch tên miền sang địa chỉ IP.</p>
+        <h3>DNS hoạt động thế nào (8 bước)</h3>
+        <div class="diagram">Trình duyệt → DNS Resolver → Root Server → TLD Server (.com) → Authoritative Server → trả IP về Resolver → trả về trình duyệt → tải nội dung</div>
+        <figure class="fig"><img src="../assets/img/how-dns-works.png" alt="Quá trình phân giải DNS" loading="lazy" /><figcaption>Luồng phân giải DNS đầy đủ: từ trình duyệt qua Resolver → Root → TLD → Authoritative</figcaption></figure>
+        <p>Bốn loại server chính:</p>
+        <ul>
+          <li><strong>DNS Resolver</strong> (recursive resolver): trạm đầu tiên, trung gian giữa client và nameserver; trả lời từ cache hoặc đi hỏi root → TLD → authoritative.</li>
+          <li><strong>Root Server</strong>: định hướng tới TLD theo phần mở rộng (.com/.net...). Có <strong>13</strong> loại root nameserver, do <strong>ICANN</strong> quản lý, dùng <strong>Anycast routing</strong>.</li>
+          <li><strong>TLD Nameserver</strong>: giữ thông tin các domain cùng đuôi; do <strong>IANA</strong> quản lý.</li>
+          <li><strong>Authoritative Server</strong>: trạm cuối, chứa thông tin cụ thể của domain; trả IP từ bản ghi A (hoặc trả NXDOMAIN nếu không tìm thấy).</li>
+        </ul>
+        <h3>Các loại bản ghi (record) thường gặp</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Record</th><th>Công dụng</th></tr></thead>
+            <tbody>
+              <tr><td><code>A</code></td><td>Trỏ domain tới địa chỉ IPv4.</td></tr>
+              <tr><td><code>AAAA</code></td><td>Trỏ tới địa chỉ IPv6.</td></tr>
+              <tr><td><code>CNAME</code></td><td>Bí danh (alias) trỏ domain này sang domain khác (không phải IP).</td></tr>
+              <tr><td><code>MX</code></td><td>Trỏ mail tới mail server.</td></tr>
+              <tr><td><code>TXT</code></td><td>Ghi chú text, thường dùng cho bảo mật email.</td></tr>
+              <tr><td><code>NS</code></td><td>Khai báo name server cho domain.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>DNS Caching:</strong> mỗi record có <strong>TTL</strong> (time-to-live, giây) — được cache lại để tra cứu nhanh; hết TTL thì xóa và phân giải lại. <strong>Reverse DNS</strong> dùng bản ghi <code>PTR</code> để tra tên miền từ IP (mail server hay dùng để chống spam).</p>
+        <p><em>Ví dụ dịch vụ DNS quản lý:</em> Route53, Cloudflare DNS, Google Cloud DNS, Azure DNS.</p>
+
+        <div class="note tip">
+          <span class="note-title">✅ Tóm tắt bài 2</span>
+          <p>IP định danh thiết bị (IPv4 32-bit/IPv6 128-bit). OSI 7 lớp chia nhỏ quá trình truyền thông. TCP đáng tin (web, file), UDP nhanh (streaming, DNS). DNS dịch tên → IP qua Resolver → Root → TLD → Authoritative, có cache theo TTL.</p>
+        </div>
+
+        <div class="pager">
+          <a href="01-gioi-thieu.html"><div class="dir">← Bài trước</div><div class="ttl">Giới thiệu System Design</div></a>
+          <a class="next" href="03-load-balancing-clustering.html"><div class="dir">Bài tiếp theo →</div><div class="ttl">Load Balancing &amp; Clustering</div></a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="../assets/script.js"></script>
+</body>
+</html>
